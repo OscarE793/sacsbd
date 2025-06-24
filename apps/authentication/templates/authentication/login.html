@@ -1,0 +1,70 @@
+{% load static %}
+<!DOCTYPE html>
+<html class="h-full" data-kt-theme="true" data-kt-theme-mode="light" dir="ltr" lang="en">
+ <head>
+  <title>Sign In</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+  <link href="{% static 'assets/vendors/apexcharts/apexcharts.css' %}" rel="stylesheet"/>
+  <link href="{% static 'assets/vendors/keenicons/styles.bundle.css' %}" rel="stylesheet"/>
+  <link href="{% static 'assets/css/styles.css' %}" rel="stylesheet"/>
+  <link rel="icon" href="{% static 'assets/media/app/favicon.ico' %}">
+ </head>
+ <body class="antialiased flex h-full text-base text-foreground bg-background">
+  <div class="flex items-center justify-center grow bg-center bg-no-repeat page-bg"
+       style="background-image: url('{% static 'assets/media/images/2600x1200/bg-10.png' %}');">
+   <div class="kt-card max-w-[370px] w-full">
+    <form method="post" class="kt-card-content flex flex-col gap-5 p-10" id="sign_in_form" autocomplete="off">
+     {% csrf_token %}
+     <div class="text-center mb-2.5">
+      <h3 class="text-lg font-medium text-mono leading-none mb-2.5">
+       Sign in
+      </h3>
+      <div class="flex items-center justify-center font-medium">       
+      </div>
+     </div>
+     <!-- Mensajes de error -->
+     {% if form.errors %}
+         <div class="text-red-500 text-sm mb-3">
+             {% for field in form %}
+                 {% for error in field.errors %}
+                     <div>{{ error|escape }}</div>
+                 {% endfor %}
+             {% endfor %}
+             {% for error in form.non_field_errors %}
+                 <div>{{ error|escape }}</div>
+             {% endfor %}
+         </div>
+     {% endif %}
+     {% if messages %}
+         {% for message in messages %}
+             <div class="text-red-500 text-sm mb-3">{{ message }}</div>
+         {% endfor %}
+     {% endif %}
+     <div class="flex flex-col gap-1">
+      <label class="kt-form-label font-normal text-mono">Usuario</label>
+      {{ form.username }}
+     </div>
+     <div class="flex flex-col gap-1">
+      <div class="flex items-center justify-between gap-1">
+       <label class="kt-form-label font-normal text-mono">Contraseña</label>       
+      </div>
+      <div class="kt-input" data-kt-toggle-password="true">
+        {{ form.password }}
+      </div>
+     </div>
+     <label class="kt-label">
+      <input class="kt-checkbox kt-checkbox-sm" name="remember" type="checkbox" value="1"/>
+      <span class="kt-checkbox-label">Recordarme</span>
+     </label>
+     <button class="kt-btn kt-btn-primary flex justify-center grow" type="submit">
+      Ingresar
+     </button>
+    </form>
+   </div>
+  </div>
+  <script src="{% static 'assets/js/core.bundle.js' %}"></script>
+  <script src="{% static 'assets/vendors/ktui/ktui.min.js' %}"></script>
+  <script src="{% static 'assets/vendors/apexcharts/apexcharts.min.js' %}"></script>
+ </body>
+</html>
