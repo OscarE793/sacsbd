@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - {{ app_name }}{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="row g-5 g-xl-10 mb-5 mb-xl-10">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-center py-10">
+                    <i class="ki-duotone ki-technology-4 fs-5tx text-primary mb-5">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                    </i>
+                    <h2 class="fw-bold text-dark mb-5">Monitoreo de Servidores</h2>
+                    <div class="fs-6 fw-semibold text-gray-400 mb-10">
+                        Funcionalidad en desarrollo
+                    </div>
+                    <a href="{% url 'dashboard:index' %}" class="btn btn-primary">
+                        <i class="ki-duotone ki-arrow-left fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                        Volver al Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

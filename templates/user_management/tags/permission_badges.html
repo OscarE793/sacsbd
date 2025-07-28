@@ -1,0 +1,10 @@
+<!-- Permission Badges -->
+<div class="d-inline-flex flex-wrap gap-1">
+    {% for permission in permissions %}
+        <span class="badge bg-{{ permission.color }}" title="{{ permission.name }}">
+            <i class="fas {{ permission.icon }} me-1"></i>{{ permission.name }}
+        </span>
+    {% empty %}
+        <span class="badge bg-secondary">Sin permisos especiales</span>
+    {% endfor %}
+</div>

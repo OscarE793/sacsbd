@@ -1,0 +1,40 @@
+<!-- templates/base/base.html -->
+{% load static %}
+<!DOCTYPE html>
+<html class="h-full" data-kt-theme="true" data-kt-theme-mode="light" dir="ltr" lang="es">
+<head>
+    <title>{% block title %}SACS_BD{% endblock %}</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+    
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="{% static 'custom/img/sacs-favicon.ico' %}"/>
+    
+    <!-- Keen Icons (Metronic) -->
+    <link href="{% static 'assets/vendors/keenicons/duotone/style.css' %}" rel="stylesheet"/>
+    <link href="{% static 'assets/vendors/keenicons/outline/style.css' %}" rel="stylesheet"/>
+    <link href="{% static 'assets/vendors/keenicons/solid/style.css' %}" rel="stylesheet"/>
+    
+    <!-- Metronic CSS -->
+    <link href="{% static 'assets/css/styles.css' %}" rel="stylesheet"/>
+    
+    <!-- SACS_BD CSS Personalizado -->
+    <link href="{% static 'custom/css/sacs-theme.css' %}" rel="stylesheet"/>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="{% block body_class %}app-default{% endblock %}">
+    {% block body_content %}{% endblock %}
+    
+    <!-- Metronic JS Core -->
+    <script src="{% static 'assets/js/core.bundle.js' %}"></script>
+    
+    <!-- Metronic Utilities -->
+    <script src="{% static 'assets/vendors/ktui/ktui.min.js' %}"></script>
+    
+    <!-- SACS_BD JS Personalizado -->
+    <script src="{% static 'custom/js/sacs-app.js' %}"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

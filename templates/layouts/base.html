@@ -1,0 +1,67 @@
+{% load static %}
+<!DOCTYPE html>
+<html class="h-full" data-kt-theme="true" data-kt-theme-mode="light" dir="ltr" lang="es">
+<head>
+    <title>{% block title %}SACS_BD{% endblock %} - Sistema de Administración</title>
+    <meta charset="utf-8"/>
+    <meta name="description" content="{% block description %}Sistema de Administración y Control de Seguridad de Backups{% endblock %}"/>
+    <meta name="keywords" content="{% block keywords %}backup, sql server, monitoreo, administración{% endblock %}"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+    
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="{% static 'demo1/assets/media/logos/favicon.ico' %}"/>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Keen Icons -->
+    <link href="{% static 'demo1/assets/vendors/keenicons/duotone/style.css' %}" rel="stylesheet" type="text/css"/>
+    <link href="{% static 'demo1/assets/vendors/keenicons/outline/style.css' %}" rel="stylesheet" type="text/css"/>
+    <link href="{% static 'demo1/assets/vendors/keenicons/solid/style.css' %}" rel="stylesheet" type="text/css"/>
+    
+    <!-- Metronic CSS Bundle -->
+    <link href="{% static 'demo1/assets/css/style.bundle.css' %}" rel="stylesheet" type="text/css"/>
+    
+    <!-- SACS_BD Custom CSS -->
+    <link href="{% static 'custom/css/sacs-theme.css' %}" rel="stylesheet" type="text/css"/>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body class="{% block body_class %}app-default{% endblock %}" data-kt-app-layout="{% block app_layout %}default{% endblock %}">
+    {% block body_content %}
+    <!-- Content específico del layout -->
+    {% endblock %}
+    
+    <!-- Metronic Scripts Bundle -->
+    <script src="{% static 'demo1/assets/js/scripts.bundle.js' %}"></script>
+    
+    <!-- KTUtil Framework -->
+    <script src="{% static 'demo1/assets/vendors/ktui/ktui.min.js' %}"></script>
+    
+    {% block extra_js %}{% endblock %}
+    
+    <!-- SACS_BD Custom Scripts -->
+    <script src="{% static 'custom/js/sacs-app.js' %}"></script>
+    
+    <!-- Initialization -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Metronic
+            if (typeof KTUtil !== 'undefined') {
+                KTUtil.init();
+            }
+            
+            // Initialize tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+            
+            {% block document_ready %}{% endblock %}
+        });
+    </script>
+</body>
+</html>

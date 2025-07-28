@@ -15,14 +15,21 @@ SECURE_REDIRECT_EXEMPT = []
 SECURE_SSL_REDIRECT = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-# Database configuration for production
+# SQL Server Database configuration for production
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get('DB_NAME'),
-        "USER": os.environ.get('DB_USER'),
-        "PASSWORD": os.environ.get('DB_PASSWORD'),
-        "HOST": os.environ.get('DB_HOST', 'localhost'),
-        "PORT": os.environ.get('DB_PORT', '5432'),
+        "ENGINE": "mssql",
+        "NAME": "sacs_bd",
+        "USER": "oejaramillop1",
+        "PASSWORD": "Partmoa588**",
+        "HOST": "DESKTOP-7GB1M4M\\SACSBD24",  # Con instancia
+        "PORT": "",  # Puerto vacío
+        "OPTIONS": {
+            "driver": "ODBC Driver 17 for SQL Server",
+            "extra_params": "TrustServerCertificate=yes;",
+        },
     }
 }
+
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_AUTOREFRESH = True if DEBUG else False

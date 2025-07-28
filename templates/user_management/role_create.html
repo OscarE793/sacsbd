@@ -1,0 +1,300 @@
+{% extends "reportes/reports_base.html" %}
+{% load static %}
+
+{% block title %}Crear Rol - SACSBD{% endblock %}
+{% block page_title %}Crear Rol{% endblock %}
+
+{% block report_title %}Crear Nuevo Rol{% endblock %}
+{% block report_subtitle %}Define un nuevo rol con sus permisos correspondientes{% endblock %}
+
+{% block report_actions %}
+<div class="export-buttons">
+    <a href="{% url 'user_management:roles_list' %}" class="btn btn-sm btn-light">
+        <i class="ki-duotone ki-arrow-left fs-3">
+            <span class="path1"></span>
+            <span class="path2"></span>
+        </i>
+        Volver a Roles
+    </a>
+</div>
+{% endblock %}
+
+{% block report_content %}
+
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Información del Rol</h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="roleForm">
+                    {% csrf_token %}
+                    
+                    <!-- Información Básica -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="text-muted mb-3">
+                                <i class="fas fa-info-circle me-2"></i>Información Básica
+                            </h5>
+                            <hr>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label required">
+                                Nombre del Rol
+                            </label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.name.errors|first }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Nombre único para identificar el rol (ej: "Operador de Reportes")
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">
+                                Descripción
+                            </label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.description.errors|first }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Describe brevemente las responsabilidades de este rol
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Permisos del Sistema -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="text-muted mb-3">
+                                <i class="fas fa-shield-alt me-2"></i>Permisos del Sistema
+                            </h5>
+                            <hr>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-check form-check-custom form-check-solid mb-3">
+                                {{ form.es_administrador }}
+                                <label class="form-check-label" for="{{ form.es_administrador.id_for_label }}">
+                                    <span class="fw-bold text-danger">
+                                        <i class="fas fa-crown me-1"></i>Administrador del Sistema
+                                    </span>
+                                    <br>
+                                    <small class="text-muted">Acceso total a todas las funcionalidades</small>
+                                </label>
+                            </div>
+                            
+                            <div class="form-check form-check-custom form-check-solid mb-3">
+                                {{ form.puede_gestionar_usuarios }}
+                                <label class="form-check-label" for="{{ form.puede_gestionar_usuarios.id_for_label }}">
+                                    <span class="fw-bold text-primary">
+                                        <i class="fas fa-users-cog me-1"></i>Gestionar Usuarios
+                                    </span>
+                                    <br>
+                                    <small class="text-muted">Crear, editar y eliminar usuarios</small>
+                                </label>
+                            </div>
+                            
+                            <div class="form-check form-check-custom form-check-solid mb-3">
+                                {{ form.puede_ver_reportes }}
+                                <label class="form-check-label" for="{{ form.puede_ver_reportes.id_for_label }}">
+                                    <span class="fw-bold text-info">
+                                        <i class="fas fa-chart-bar me-1"></i>Ver Reportes
+                                    </span>
+                                    <br>
+                                    <small class="text-muted">Acceso a los reportes del sistema</small>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-check form-check-custom form-check-solid mb-3">
+                                {{ form.puede_gestionar_backups }}
+                                <label class="form-check-label" for="{{ form.puede_gestionar_backups.id_for_label }}">
+                                    <span class="fw-bold text-success">
+                                        <i class="fas fa-database me-1"></i>Gestionar Backups
+                                    </span>
+                                    <br>
+                                    <small class="text-muted">Crear y restaurar copias de seguridad</small>
+                                </label>
+                            </div>
+                            
+                            <div class="form-check form-check-custom form-check-solid mb-3">
+                                {{ form.puede_monitorear_servidores }}
+                                <label class="form-check-label" for="{{ form.puede_monitorear_servidores.id_for_label }}">
+                                    <span class="fw-bold text-warning">
+                                        <i class="fas fa-server me-1"></i>Monitorear Servidores
+                                    </span>
+                                    <br>
+                                    <small class="text-muted">Ver estado y métricas de servidores</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Permisos Específicos -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="text-muted mb-3">
+                                <i class="fas fa-key me-2"></i>Permisos Específicos (Opcional)
+                            </h5>
+                            <hr>
+                            <div class="alert alert-info d-flex align-items-center p-3">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <span>Los permisos específicos otorgan acceso granular a funciones individuales del sistema.</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="accordion" id="permissionsAccordion">
+                                {% regroup form.permissions.field.queryset by content_type.app_label as permissions_by_app %}
+                                {% for app in permissions_by_app %}
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="heading-{{ forloop.counter }}">
+                                        <button class="accordion-button collapsed" type="button" 
+                                                data-bs-toggle="collapse" 
+                                                data-bs-target="#collapse-{{ forloop.counter }}" 
+                                                aria-expanded="false">
+                                            <i class="fas fa-cube me-2"></i>
+                                            {{ app.grouper|capfirst }}
+                                        </button>
+                                    </h2>
+                                    <div id="collapse-{{ forloop.counter }}" 
+                                         class="accordion-collapse collapse" 
+                                         data-bs-parent="#permissionsAccordion">
+                                        <div class="accordion-body">
+                                            <div class="row">
+                                                {% for permission in app.list %}
+                                                <div class="col-md-6 mb-2">
+                                                    <div class="form-check form-check-custom form-check-solid">
+                                                        <input class="form-check-input" 
+                                                               type="checkbox" 
+                                                               name="permissions" 
+                                                               value="{{ permission.id }}"
+                                                               id="perm-{{ permission.id }}">
+                                                        <label class="form-check-label" for="perm-{{ permission.id }}">
+                                                            {{ permission.name }}
+                                                            <br>
+                                                            <small class="text-muted">
+                                                                {{ permission.codename }}
+                                                            </small>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Botones de Acción -->
+                    <div class="row">
+                        <div class="col-12">
+                            <hr>
+                            <div class="d-flex justify-content-end gap-2">
+                                <a href="{% url 'user_management:roles_list' %}" class="btn btn-light">
+                                    <i class="fas fa-times me-2"></i>Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>Crear Rol
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block reports_extra_css %}
+<style>
+.required::after {
+    content: " *";
+    color: #dc3545;
+}
+
+.form-check-custom .form-check-input {
+    margin-top: 0.25rem;
+}
+
+.accordion-button {
+    font-weight: 600;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: #f8f9fa;
+}
+
+.gap-2 {
+    gap: 0.5rem !important;
+}
+</style>
+{% endblock %}
+
+{% block reports_extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Cuando se marca "Administrador", marcar todos los demás permisos
+    const adminCheckbox = document.getElementById('{{ form.es_administrador.id_for_label }}');
+    if (adminCheckbox) {
+        adminCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                // Marcar todos los permisos del sistema
+                document.getElementById('{{ form.puede_gestionar_usuarios.id_for_label }}').checked = true;
+                document.getElementById('{{ form.puede_ver_reportes.id_for_label }}').checked = true;
+                document.getElementById('{{ form.puede_gestionar_backups.id_for_label }}').checked = true;
+                document.getElementById('{{ form.puede_monitorear_servidores.id_for_label }}').checked = true;
+                
+                // Opcional: marcar todos los permisos específicos
+                document.querySelectorAll('input[name="permissions"]').forEach(function(checkbox) {
+                    checkbox.checked = true;
+                });
+            }
+        });
+    }
+    
+    // Validación del formulario
+    document.getElementById('roleForm').addEventListener('submit', function(e) {
+        const roleName = document.getElementById('{{ form.name.id_for_label }}').value.trim();
+        
+        if (!roleName) {
+            e.preventDefault();
+            alert('Por favor, ingresa un nombre para el rol');
+            return false;
+        }
+        
+        // Verificar que al menos un permiso esté seleccionado
+        const systemPerms = [
+            document.getElementById('{{ form.es_administrador.id_for_label }}').checked,
+            document.getElementById('{{ form.puede_gestionar_usuarios.id_for_label }}').checked,
+            document.getElementById('{{ form.puede_ver_reportes.id_for_label }}').checked,
+            document.getElementById('{{ form.puede_gestionar_backups.id_for_label }}').checked,
+            document.getElementById('{{ form.puede_monitorear_servidores.id_for_label }}').checked
+        ];
+        
+        const specificPerms = document.querySelectorAll('input[name="permissions"]:checked').length;
+        
+        if (!systemPerms.some(p => p) && specificPerms === 0) {
+            e.preventDefault();
+            alert('Por favor, selecciona al menos un permiso para el rol');
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}

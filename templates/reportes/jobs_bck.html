@@ -1,0 +1,431 @@
+{% extends "reportes/reports_base.html" %}
+{% load static %}
+
+{% block title %}Jobs de Backup - SACSBD{% endblock %}
+{% block page_title %}Jobs de Backup{% endblock %}
+
+{% block report_title %}Jobs de Backup{% endblock %}
+{% block report_subtitle %}Monitoreo y estado de trabajos de respaldo{% endblock %}
+
+{% block report_actions %}
+<div class="export-buttons">
+    <button type="button" class="btn btn-sm btn-success" id="export-excel-jobs">
+        <i class="ki-duotone ki-file-down fs-3">
+            <span class="path1"></span>
+            <span class="path2"></span>
+        </i>
+        Excel
+    </button>
+    <button type="button" class="btn btn-sm btn-danger" id="export-pdf-jobs">
+        <i class="ki-duotone ki-file-text fs-3">
+            <span class="path1"></span>
+            <span class="path2"></span>
+        </i>
+        PDF
+    </button>
+    <button type="button" class="btn btn-sm btn-info" id="export-csv-jobs">
+        <i class="ki-duotone ki-document fs-3">
+            <span class="path1"></span>
+            <span class="path2"></span>
+        </i>
+        CSV
+    </button>
+    <button type="button" class="btn btn-sm btn-light" id="refresh-jobs">
+        <i class="ki-duotone ki-arrows-circle fs-3">
+            <span class="path1"></span>
+            <span class="path2"></span>
+        </i>
+        Actualizar
+    </button>
+</div>
+{% endblock %}
+
+{% block report_filters %}
+<div class="filter-section">
+    <form method="GET" id="filter-form">
+        <div class="row align-items-end">
+            <div class="col-md-3">
+                <label class="form-label fs-6 fw-semibold text-dark">Fecha Inicio:</label>
+                <input type="date" class="form-control form-control-sm" name="fecha_inicio" 
+                       value="{{ fecha_inicio }}" id="fecha_inicio">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fs-6 fw-semibold text-dark">Fecha Fin:</label>
+                <input type="date" class="form-control form-control-sm" name="fecha_fin" 
+                       value="{{ fecha_fin }}" id="fecha_fin">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fs-6 fw-semibold text-dark">Servidor:</label>
+                <select class="form-select form-select-sm" name="servidor" id="servidor_filter">
+                    <option value="">Todos los servidores</option>
+                    {% for srv in servidores %}
+                        <option value="{{ srv.servidor }}" {% if srv.servidor == servidor %}selected{% endif %}>
+                            {{ srv.servidor }} ({{ srv.ip_servidor }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary btn-sm me-2">
+                    <i class="ki-duotone ki-magnifier fs-4">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                    </i>
+                    Filtrar
+                </button>
+                <a href="{% url 'reportes:jobs_backup' %}" class="btn btn-light btn-sm">
+                    <i class="ki-duotone ki-cross fs-4">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                    </i>
+                    Limpiar
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block report_content %}
+<!-- Estadísticas -->
+{% if stats %}
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Jobs</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-tasks fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Exitosos</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.exitosos }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Fallidos</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.fallidos }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-times-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">% Éxito</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.porcentaje_exito }}%</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-percentage fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Tabla de resultados -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Jobs de Backup - sp_resultadoJobsBck</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="jobs-table" width="100%" cellspacing="0">
+                <thead>
+                    <tr class="text-center">
+                        <th>RESULTADO</th>
+                        <th>SERVIDOR</th>
+                        <th>IPSERVER</th>
+                        <th>FECHA</th>
+                        <th>HORA</th>
+                        <th>NOMBRE_DEL_JOB</th>
+                        <th>PASO</th>
+                        <th>MENSAJE</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for resultado in resultados %}
+                    <tr class="text-center" style="font-size: smaller;">
+                        <td class="text-center">
+                            {% if 'exitoso' in resultado.RESULTADO|lower %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check-circle me-1"></i>{{ resultado.RESULTADO }}
+                                </span>
+                            {% elif 'fallido' in resultado.RESULTADO|lower or 'error' in resultado.RESULTADO|lower %}
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-times-circle me-1"></i>{{ resultado.RESULTADO }}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>{{ resultado.RESULTADO }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">{{ resultado.SERVIDOR }}</td>
+                        <td class="text-center">{{ resultado.IPSERVER }}</td>
+                        <td class="text-center">{{ resultado.FECHA }}</td>
+                        <td class="text-center">{{ resultado.HORA }}</td>
+                        <td class="text-start">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-cog text-primary me-2"></i>
+                                <span class="fw-bold">{{ resultado.NOMBRE_DEL_JOB }}</span>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-info">{{ resultado.PASO }}</span>
+                        </td>
+                        <td class="text-start">
+                            <div class="text-truncate" style="max-width: 200px;" title="{{ resultado.MENSAJE }}">
+                                {{ resultado.MENSAJE|truncatechars:50 }}
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                    onclick="mostrarDetalle('{{ resultado.NOMBRE_DEL_JOB }}', '{{ resultado.MENSAJE|escapejs }}', '{{ resultado.FECHA }}', '{{ resultado.HORA }}')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center py-4">
+                            <div class="alert alert-info">
+                                <h5>No se encontraron jobs</h5>
+                                <p>No hay datos para el período seleccionado.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginación -->
+        {% if resultados.has_other_pages %}
+        <nav aria-label="Paginación">
+            <ul class="pagination justify-content-center">
+                {% if resultados.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if fecha_inicio %}&fecha_inicio={{ fecha_inicio }}{% endif %}{% if fecha_fin %}&fecha_fin={{ fecha_fin }}{% endif %}{% if servidor %}&servidor={{ servidor }}{% endif %}{% if resultado %}&resultado={{ resultado }}{% endif %}">&laquo; Primera</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ resultados.previous_page_number }}{% if fecha_inicio %}&fecha_inicio={{ fecha_inicio }}{% endif %}{% if fecha_fin %}&fecha_fin={{ fecha_fin }}{% endif %}{% if servidor %}&servidor={{ servidor }}{% endif %}{% if resultado %}&resultado={{ resultado }}{% endif %}">Anterior</a>
+                    </li>
+                {% endif %}
+                
+                <li class="page-item active">
+                    <span class="page-link">Página {{ resultados.number }} de {{ resultados.paginator.num_pages }}</span>
+                </li>
+                
+                {% if resultados.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ resultados.next_page_number }}{% if fecha_inicio %}&fecha_inicio={{ fecha_inicio }}{% endif %}{% if fecha_fin %}&fecha_fin={{ fecha_fin }}{% endif %}{% if servidor %}&servidor={{ servidor }}{% endif %}{% if resultado %}&resultado={{ resultado }}{% endif %}">Siguiente</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ resultados.paginator.num_pages }}{% if fecha_inicio %}&fecha_inicio={{ fecha_inicio }}{% endif %}{% if fecha_fin %}&fecha_fin={{ fecha_fin }}{% endif %}{% if servidor %}&servidor={{ servidor }}{% endif %}{% if resultado %}&resultado={{ resultado }}{% endif %}">Última &raquo;</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal para detalles -->
+<div class="modal fade" id="detalleModal" tabindex="-1" aria-labelledby="detalleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detalleModalLabel">Detalle del Job</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Nombre del Job:</strong><br>
+                        <span id="modalJobName"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Fecha:</strong><br>
+                        <span id="modalFecha"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Hora:</strong><br>
+                        <span id="modalHora"></span>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-12">
+                        <strong>Mensaje completo:</strong><br>
+                        <div class="alert alert-info" id="modalMensaje" style="max-height: 300px; overflow-y: auto;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block reports_extra_js %}
+<!-- DataTables CSS y JS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar DataTable
+    if (document.getElementById('jobs-table')) {
+        $('#jobs-table').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
+            },
+            "pageLength": 25,
+            "responsive": true,
+            "order": [[ 3, "desc" ], [ 4, "desc" ]], // Ordenar por fecha y hora descendente
+            "columnDefs": [
+                { "orderable": false, "targets": 8 } // Columna de acciones no ordenable
+            ]
+        });
+    }
+    
+    // Configurar botones de exportación específicos para jobs
+    setupJobsExportButtons();
+});
+
+// Funciones específicas para jobs
+function setupJobsExportButtons() {
+    // Export Excel para jobs
+    $('#export-excel-jobs').on('click', function() {
+        exportJobsToExcel();
+    });
+    
+    // Export PDF para jobs
+    $('#export-pdf-jobs').on('click', function() {
+        exportJobsToPDF();
+    });
+    
+    // Export CSV para jobs
+    $('#export-csv-jobs').on('click', function() {
+        exportJobsToCSV();
+    });
+    
+    // Refresh específico para jobs
+    $('#refresh-jobs').on('click', function() {
+        refreshJobsData();
+    });
+}
+
+function exportJobsToExcel() {
+    const params = new URLSearchParams(window.location.search);
+    const url = `{% url 'reportes:jobs_backup' %}?format=excel&${params.toString()}`;
+    window.open(url, '_blank');
+}
+
+function exportJobsToPDF() {
+    showNotification('Funcionalidad de PDF en desarrollo', 'info');
+}
+
+function exportJobsToCSV() {
+    // Exportar tabla actual a CSV
+    const table = document.getElementById('jobs-table');
+    if (table) {
+        const csv = tableToCSV(table);
+        downloadCSV(csv, 'jobs_backup.csv');
+    }
+}
+
+function refreshJobsData() {
+    showNotification('Actualizando datos de jobs...', 'info');
+    setTimeout(() => {
+        location.reload();
+    }, 1000);
+}
+
+// Función para mostrar detalle en modal
+function mostrarDetalle(jobName, mensaje, fecha, hora) {
+    document.getElementById('modalJobName').textContent = jobName;
+    document.getElementById('modalFecha').textContent = fecha;
+    document.getElementById('modalHora').textContent = hora;
+    document.getElementById('modalMensaje').textContent = mensaje;
+    
+    var modal = new bootstrap.Modal(document.getElementById('detalleModal'));
+    modal.show();
+}
+
+// Funciones utilitarias
+function tableToCSV(table) {
+    const rows = table.querySelectorAll('tr');
+    const csv = [];
+    
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const cols = row.querySelectorAll('td, th');
+        const csvRow = [];
+        
+        for (let j = 0; j < cols.length - 1; j++) { // Excluir columna de acciones
+            csvRow.push(`"${cols[j].textContent.trim().replace(/"/g, '""')}"`); 
+        }
+        
+        csv.push(csvRow.join(','));
+    }
+    
+    return csv.join('\n');
+}
+
+function downloadCSV(csv, filename) {
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Sobrescribir función de refresh específica
+function refreshSpecificReport() {
+    refreshJobsData();
+}
+</script>
+{% endblock %}

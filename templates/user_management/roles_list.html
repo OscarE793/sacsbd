@@ -1,0 +1,309 @@
+{% extends "reportes/reports_base.html" %}
+{% load static %}
+
+{% block title %}Gestión de Roles - SACSBD{% endblock %}
+{% block page_title %}Gestión de Roles{% endblock %}
+
+{% block report_title %}Gestión de Roles{% endblock %}
+{% block report_subtitle %}Administra los roles y permisos del sistema{% endblock %}
+
+{% block report_actions %}
+<div class="export-buttons">
+    <a href="{% url 'user_management:role_create' %}" class="btn btn-sm btn-success">
+        <i class="ki-duotone ki-plus fs-3">
+            <span class="path1"></span>
+            <span class="path2"></span>
+        </i>
+        Nuevo Rol
+    </a>
+    <a href="{% url 'user_management:list' %}" class="btn btn-sm btn-light">
+        <i class="ki-duotone ki-arrow-left fs-3">
+            <span class="path1"></span>
+            <span class="path2"></span>
+        </i>
+        Volver a Usuarios
+    </a>
+</div>
+{% endblock %}
+
+{% block report_content %}
+
+<!-- Información de Roles -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-info d-flex align-items-center p-5">
+            <i class="ki-duotone ki-information-5 fs-2hx text-info me-4">
+                <span class="path1"></span>
+                <span class="path2"></span>
+                <span class="path3"></span>
+            </i>
+            <div class="d-flex flex-column">
+                <h4 class="mb-1 text-info">Sistema de Roles</h4>
+                <span>Los roles definen los permisos y accesos que tienen los usuarios en el sistema. Cada usuario puede tener múltiples roles asignados.</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla de Roles -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Roles del Sistema</h6>
+    </div>
+    <div class="card-body">
+        {% if roles %}
+        <div class="table-responsive">
+            <table class="table table-bordered" id="rolesTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr class="text-center">
+                        <th>Nombre del Rol</th>
+                        <th>Descripción</th>
+                        <th>Permisos</th>
+                        <th>Usuarios</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for role in roles %}
+                    <tr class="text-center" style="font-size: smaller;">
+                        <td class="text-start">
+                            <div class="d-flex align-items-center">
+                                <div class="symbol symbol-45px me-3">
+                                    <div class="symbol-label bg-light-primary text-primary fw-bold">
+                                        <i class="fas fa-shield-alt"></i>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-start flex-column">
+                                    <span class="text-dark fw-bold text-hover-primary mb-1 fs-6">{{ role.name }}</span>
+                                    {% if role.es_administrador %}
+                                        <span class="badge badge-light-danger">Administrador</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-start">
+                            {{ role.description|default:"Sin descripción" }}
+                        </td>
+                        <td class="text-center">
+                            <div class="d-flex flex-wrap justify-content-center gap-1">
+                                {% if role.puede_gestionar_usuarios %}
+                                    <span class="badge bg-primary" title="Gestionar Usuarios">
+                                        <i class="fas fa-users-cog"></i> Usuarios
+                                    </span>
+                                {% endif %}
+                                {% if role.puede_ver_reportes %}
+                                    <span class="badge bg-info" title="Ver Reportes">
+                                        <i class="fas fa-chart-bar"></i> Reportes
+                                    </span>
+                                {% endif %}
+                                {% if role.puede_gestionar_backups %}
+                                    <span class="badge bg-success" title="Gestionar Backups">
+                                        <i class="fas fa-database"></i> Backups
+                                    </span>
+                                {% endif %}
+                                {% if role.puede_monitorear_servidores %}
+                                    <span class="badge bg-warning" title="Monitorear Servidores">
+                                        <i class="fas fa-server"></i> Servidores
+                                    </span>
+                                {% endif %}
+                            </div>
+                            {% if role.permissions.count > 0 %}
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        + {{ role.permissions.count }} permisos específicos
+                                    </small>
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <span class="fs-5 fw-bold">{{ role.users_count }}</span>
+                            <br>
+                            <small class="text-muted">usuarios</small>
+                        </td>
+                        <td class="text-center">
+                            {% if role.activo %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check-circle me-1"></i>Activo
+                                </span>
+                            {% else %}
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-times-circle me-1"></i>Inactivo
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-sm btn-outline-info" 
+                                        onclick="viewRoleDetails('{{ role.name }}', '{{ role.description }}', {{ role.es_administrador|yesno:'true,false' }}, {{ role.puede_gestionar_usuarios|yesno:'true,false' }}, {{ role.puede_ver_reportes|yesno:'true,false' }}, {{ role.puede_gestionar_backups|yesno:'true,false' }}, {{ role.puede_monitorear_servidores|yesno:'true,false' }})"
+                                        title="Ver detalles">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <a href="#" class="btn btn-sm btn-outline-warning" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% if role.users_count == 0 %}
+                                <button class="btn btn-sm btn-outline-danger" 
+                                        onclick="deleteRole({{ role.id }})"
+                                        title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-warning d-flex align-items-center p-5">
+            <i class="ki-duotone ki-warning fs-2hx text-warning me-4">
+                <span class="path1"></span>
+                <span class="path2"></span>
+            </i>
+            <div class="d-flex flex-column">
+                <h4 class="mb-1 text-warning">No hay roles</h4>
+                <span>No se han definido roles en el sistema. Crea el primer rol haciendo clic en "Nuevo Rol".</span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal para ver detalles del rol -->
+<div class="modal fade" id="roleDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalles del Rol</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Nombre:</label>
+                    <p id="roleName" class="text-gray-800"></p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Descripción:</label>
+                    <p id="roleDescription" class="text-gray-800"></p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Permisos:</label>
+                    <div id="rolePermissions">
+                        <!-- Se llenará con JavaScript -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block reports_extra_css %}
+<style>
+.symbol {
+    display: inline-flex;
+    flex-shrink: 0;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.symbol-45px {
+    width: 45px;
+    height: 45px;
+}
+
+.symbol-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+}
+
+.bg-light-primary {
+    background-color: #e1e9ff !important;
+}
+
+.badge {
+    padding: 0.35em 0.65em;
+}
+
+.gap-1 {
+    gap: 0.25rem !important;
+}
+</style>
+{% endblock %}
+
+{% block reports_extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar DataTable
+    if (document.getElementById('rolesTable')) {
+        $('#rolesTable').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
+            },
+            "pageLength": 25,
+            "responsive": true,
+            "order": [[ 0, "asc" ]], // Ordenar por nombre
+            "columnDefs": [
+                { "orderable": false, "targets": 5 } // Columna de acciones no ordenable
+            ]
+        });
+    }
+});
+
+// Función para ver detalles del rol
+function viewRoleDetails(name, description, esAdmin, puedeUsuarios, puedeReportes, puedeBackups, puedeServidores) {
+    document.getElementById('roleName').textContent = name;
+    document.getElementById('roleDescription').textContent = description || 'Sin descripción';
+    
+    let permisos = '<div class="d-flex flex-wrap gap-2">';
+    
+    if (esAdmin) {
+        permisos += '<span class="badge bg-danger"><i class="fas fa-crown me-1"></i>Administrador Total</span>';
+    }
+    if (puedeUsuarios) {
+        permisos += '<span class="badge bg-primary"><i class="fas fa-users-cog me-1"></i>Gestionar Usuarios</span>';
+    }
+    if (puedeReportes) {
+        permisos += '<span class="badge bg-info"><i class="fas fa-chart-bar me-1"></i>Ver Reportes</span>';
+    }
+    if (puedeBackups) {
+        permisos += '<span class="badge bg-success"><i class="fas fa-database me-1"></i>Gestionar Backups</span>';
+    }
+    if (puedeServidores) {
+        permisos += '<span class="badge bg-warning"><i class="fas fa-server me-1"></i>Monitorear Servidores</span>';
+    }
+    
+    permisos += '</div>';
+    
+    document.getElementById('rolePermissions').innerHTML = permisos;
+    
+    var modal = new bootstrap.Modal(document.getElementById('roleDetailsModal'));
+    modal.show();
+}
+
+// Función para eliminar rol
+function deleteRole(roleId) {
+    if (confirm('¿Estás seguro de eliminar este rol? Esta acción no se puede deshacer.')) {
+        // Aquí iría la llamada AJAX para eliminar el rol
+        showNotification('Función en desarrollo', 'info');
+    }
+}
+
+// Función para mostrar notificaciones
+function showNotification(message, type = 'success') {
+    // Aquí podrías usar una librería de notificaciones como Toastr o SweetAlert
+    alert(message);
+}
+</script>
+{% endblock %}

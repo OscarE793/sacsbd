@@ -1,0 +1,78 @@
+{% extends "reportes/reports_base.html" %}
+{% load static %}
+
+{% block title %}Archivos .bak - SACSBD{% endblock %}
+{% block page_title %}Archivos .bak{% endblock %}
+
+{% block report_title %}Archivos de Backup{% endblock %}
+{% block report_subtitle %}Listado de archivos .bak generados{% endblock %}
+
+{% block report_content %}
+<div class="table-responsive-custom">
+    <table class="table table-row-dashed table-row-gray-300 align-middle gs-0 gy-4" id="archivos-table">
+        <thead>
+            <tr class="fw-bold text-muted">
+                <th>Base de Datos</th>
+                <th>Ruta del Archivo</th>
+                <th>Fecha Backup</th>
+                <th>Tipo</th>
+                <th>Tamaño</th>
+                <th>Compresión</th>
+                <th class="text-end">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for resultado in resultados %}
+            <tr>
+                <td>
+                    <span class="text-dark fw-bold">{{ resultado.database_name }}</span>
+                </td>
+                <td>
+                    <code class="text-muted">{{ resultado.backup_path|truncatechars:50 }}</code>
+                </td>
+                <td>
+                    <span class="text-dark">{{ resultado.backup_finish_date|date:"d/m/Y H:i" }}</span>
+                </td>
+                <td>
+                    <span class="badge badge-light-primary">{{ resultado.backup_type_desc }}</span>
+                </td>
+                <td>
+                    <span class="text-dark">{{ resultado.backup_size|filesizeformat }}</span>
+                </td>
+                <td>
+                    {% if resultado.compressed_backup_size %}
+                        <span class="text-success">{{ resultado.compressed_backup_size|filesizeformat }}</span>
+                    {% else %}
+                        <span class="text-muted">-</span>
+                    {% endif %}
+                </td>
+                <td class="text-end">
+                    <button type="button" class="btn btn-sm btn-light-primary">
+                        <i class="ki-duotone ki-eye fs-4">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                        </i>
+                    </button>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center py-10">No se encontraron archivos</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block reports_extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    $('#archivos-table').DataTable({
+        pageLength: 25,
+        language: window.ReportsConfig.language
+    });
+});
+</script>
+{% endblock %}

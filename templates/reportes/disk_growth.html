@@ -1,0 +1,721 @@
+{% extends "reportes/reports_base.html" %}
+{% load static %}
+
+{% block title %}Crecimiento de Discos - SACSBD{% endblock %}
+{% block page_title %}Crecimiento de Discos{% endblock %}
+
+{% block report_title %}Monitoreo de Crecimiento de Discos{% endblock %}
+{% block report_subtitle %}Análisis del espacio en disco de las bases de datos{% endblock %}
+
+{% block report_actions %}
+<div class="export-buttons">
+    <button type="button" class="btn btn-sm btn-success" id="export-excel-disk">
+        <i class="ki-duotone ki-file-down fs-3">
+            <span class="path1"></span>
+            <span class="path2"></span>
+        </i>
+        Excel
+    </button>
+    <button type="button" class="btn btn-sm btn-danger" id="export-pdf-disk">
+        <i class="ki-duotone ki-file-text fs-3">
+            <span class="path1"></span>
+            <span class="path2"></span>
+        </i>
+        PDF
+    </button>
+    <button type="button" class="btn btn-sm btn-info" id="export-csv-disk">
+        <i class="ki-duotone ki-document fs-3">
+            <span class="path1"></span>
+            <span class="path2"></span>
+        </i>
+        CSV
+    </button>
+    <button type="button" class="btn btn-sm btn-primary" id="run-monitor-sp">
+        <i class="ki-duotone ki-shield-tick fs-3">
+            <span class="path1"></span>
+            <span class="path2"></span>
+        </i>
+        Ejecutar Monitor
+    </button>
+    <button type="button" class="btn btn-sm btn-light" id="refresh-disk">
+        <i class="ki-duotone ki-arrows-circle fs-3">
+            <span class="path1"></span>
+            <span class="path2"></span>
+        </i>
+        Actualizar
+    </button>
+</div>
+{% endblock %}
+
+{% block report_filters %}
+<div class="filter-section">
+    <form method="GET" id="filter-form">
+        <div class="row align-items-end">
+            <div class="col-md-3">
+                <label class="form-label fs-6 fw-semibold text-dark">Fecha Inicio:</label>
+                <input type="date" class="form-control form-control-sm" name="fecha_inicio" value="{{ fecha_inicio }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fs-6 fw-semibold text-dark">Fecha Fin:</label>
+                <input type="date" class="form-control form-control-sm" name="fecha_fin" value="{{ fecha_fin }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fs-6 fw-semibold text-dark">Servidor:</label>
+                <select class="form-select form-select-sm" name="servidor" id="servidor_filter">
+                    <option value="">Todos</option>
+                    {% for srv in servidores %}
+                        <option value="{{ srv.servidor }}" {% if srv.servidor == servidor %}selected{% endif %}>
+                            {{ srv.servidor }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fs-6 fw-semibold text-dark">Base de Datos:</label>
+                <select class="form-select form-select-sm" name="base_datos" id="base_datos_filter">
+                    <option value="">Todas</option>
+                    {% for bd in bases_datos %}
+                        <option value="{{ bd.base_datos }}" {% if bd.base_datos == base_datos %}selected{% endif %}>
+                            {{ bd.base_datos }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary btn-sm me-2">
+                    <i class="ki-duotone ki-magnifier fs-4">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                    </i>
+                    Filtrar
+                </button>
+                <a href="{% url 'reportes:disk_growth' %}" class="btn btn-light btn-sm">
+                    <i class="ki-duotone ki-cross fs-4">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                    </i>
+                    Limpiar
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block report_content %}
+
+<!-- Estadísticas -->
+{% if estadisticas %}
+<div class="row mb-4">
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Logs</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ estadisticas.total_registros }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-list fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Espacio Usado</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ estadisticas.espacio_usado_gb }} GB</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-hdd fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Espacio Libre</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ estadisticas.espacio_libre_gb }} GB</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Discos Críticos</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ estadisticas.discos_criticos }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Advertencias</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ estadisticas.discos_advertencia }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card border-left-secondary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">Servidores</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ estadisticas.servidores }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-server fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Gráfico de tendencia (si hay datos) -->
+{% if tendencia %}
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Tendencia de Crecimiento (Últimos 7 días)</h6>
+    </div>
+    <div class="card-body">
+        <canvas id="tendenciaChart" height="100"></canvas>
+    </div>
+</div>
+{% endif %}
+
+<!-- Tabla de resultados -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Detalle de Crecimiento de Discos</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="diskGrowthTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr class="text-center">
+                        <th>Fecha/Hora</th>
+                        <th>Servidor IP</th>
+                        <th>Base de Datos</th>
+                        <th>Archivo</th>
+                        <th>Tamaño (MB)</th>
+                        <th>Espacio Libre (MB)</th>
+                        <th>% Libre</th>
+                        <th>Estado</th>
+                        <th>Ruta</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if resultados %}
+                        {% for resultado in resultados %}
+                        <tr class="text-center" style="font-size: smaller;">
+                            <td class="text-center">
+                                <small class="text-muted">{{ resultado.LogDate|date:"d/m/Y H:i:s" }}</small>
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <i class="fas fa-server text-primary me-2"></i>
+                                    <span class="fw-bold">{{ resultado.ServerIP }}</span>
+                                </div>
+                            </td>
+                            <td class="text-start">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-database text-info me-2"></i>
+                                    <span class="fw-bold">{{ resultado.DatabaseName }}</span>
+                                </div>
+                            </td>
+                            <td class="text-start">
+                                <i class="fas fa-file text-secondary me-1"></i>
+                                {{ resultado.FileName }}
+                            </td>
+                            <td class="text-end">
+                                <span class="badge bg-info">{{ resultado.FileSizeMB|floatformat:0 }}</span>
+                            </td>
+                            <td class="text-end">
+                                <span class="badge bg-{{ resultado.status_class }}">{{ resultado.DiskFreeMB|floatformat:0 }}</span>
+                            </td>
+                            <td class="text-center">
+                                {% if resultado.PorcentajeLibre %}
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-{{ resultado.status_class }}" 
+                                             role="progressbar" 
+                                             style="width: {{ resultado.PorcentajeLibre }}%"
+                                             aria-valuenow="{{ resultado.PorcentajeLibre }}" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                            {{ resultado.PorcentajeLibre }}%
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if resultado.status_class == 'danger' %}
+                                    <span class="badge bg-danger">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>CRÍTICO
+                                    </span>
+                                {% elif resultado.status_class == 'warning' %}
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-exclamation me-1"></i>ADVERTENCIA
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check me-1"></i>OK
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-start" style="max-width: 300px;">
+                                <small class="text-muted text-truncate d-inline-block" style="max-width: 290px;" title="{{ resultado.FilePath }}">
+                                    {{ resultado.FilePath }}
+                                </small>
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-outline-primary" 
+                                        onclick="mostrarDetalleDisk('{{ resultado.ServerIP }}', '{{ resultado.DatabaseName }}', '{{ resultado.FileName }}', '{{ resultado.FileSizeMB }}', '{{ resultado.DiskFreeMB }}', '{{ resultado.FilePath }}', '{{ resultado.LogDate }}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr class="text-center" style="font-size: smaller;">
+                            <td class="text-center" colspan="10">
+                                <div class="alert alert-info">
+                                    <h5><i class="fas fa-info-circle me-2"></i>No hay datos</h5>
+                                    <p>No se encontraron registros de crecimiento de discos para el período seleccionado.</p>
+                                    <button class="btn btn-primary" onclick="ejecutarMonitorSP()">
+                                        <i class="fas fa-play-circle me-2"></i>Ejecutar Monitor Ahora
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginación -->
+        {% if resultados.has_other_pages %}
+        <nav aria-label="Paginación">
+            <ul class="pagination justify-content-center">
+                {% if resultados.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if fecha_inicio %}&fecha_inicio={{ fecha_inicio }}{% endif %}{% if fecha_fin %}&fecha_fin={{ fecha_fin }}{% endif %}{% if servidor %}&servidor={{ servidor }}{% endif %}{% if base_datos %}&base_datos={{ base_datos }}{% endif %}">&laquo; Primera</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ resultados.previous_page_number }}{% if fecha_inicio %}&fecha_inicio={{ fecha_inicio }}{% endif %}{% if fecha_fin %}&fecha_fin={{ fecha_fin }}{% endif %}{% if servidor %}&servidor={{ servidor }}{% endif %}{% if base_datos %}&base_datos={{ base_datos }}{% endif %}">Anterior</a>
+                    </li>
+                {% endif %}
+                
+                <li class="page-item active">
+                    <span class="page-link">Página {{ resultados.number }} de {{ resultados.paginator.num_pages }}</span>
+                </li>
+                
+                {% if resultados.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ resultados.next_page_number }}{% if fecha_inicio %}&fecha_inicio={{ fecha_inicio }}{% endif %}{% if fecha_fin %}&fecha_fin={{ fecha_fin }}{% endif %}{% if servidor %}&servidor={{ servidor }}{% endif %}{% if base_datos %}&base_datos={{ base_datos }}{% endif %}">Siguiente</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ resultados.paginator.num_pages }}{% if fecha_inicio %}&fecha_inicio={{ fecha_inicio }}{% endif %}{% if fecha_fin %}&fecha_fin={{ fecha_fin }}{% endif %}{% if servidor %}&servidor={{ servidor }}{% endif %}{% if base_datos %}&base_datos={{ base_datos }}{% endif %}">Última &raquo;</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal para detalles -->
+<div class="modal fade" id="detalleDiskModal" tabindex="-1" aria-labelledby="detalleDiskModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detalleDiskModalLabel">Detalle de Espacio en Disco</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Servidor IP:</strong><br>
+                        <span id="modalServerIP"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Base de Datos:</strong><br>
+                        <span id="modalDatabaseName"></span>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Nombre del Archivo:</strong><br>
+                        <span id="modalFileName"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Fecha de Registro:</strong><br>
+                        <span id="modalLogDate"></span>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-4">
+                        <strong>Tamaño del Archivo:</strong><br>
+                        <span id="modalFileSize"></span> MB
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Espacio Libre en Disco:</strong><br>
+                        <span id="modalDiskFree"></span> MB
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Porcentaje Libre:</strong><br>
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar" id="modalProgressBar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-12">
+                        <strong>Ruta Completa del Archivo:</strong><br>
+                        <code id="modalFilePath" style="word-break: break-all;"></code>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block reports_extra_css %}
+<style>
+.border-left-primary {
+    border-left: 0.25rem solid #4e73df !important;
+}
+
+.border-left-success {
+    border-left: 0.25rem solid #1cc88a !important;
+}
+
+.border-left-info {
+    border-left: 0.25rem solid #36b9cc !important;
+}
+
+.border-left-warning {
+    border-left: 0.25rem solid #f6c23e !important;
+}
+
+.border-left-danger {
+    border-left: 0.25rem solid #e74a3b !important;
+}
+
+.border-left-secondary {
+    border-left: 0.25rem solid #858796 !important;
+}
+
+.text-gray-800 {
+    color: #5a5c69 !important;
+}
+
+.text-gray-300 {
+    color: #dddfeb !important;
+}
+
+.progress {
+    background-color: #eaecf4;
+}
+
+.text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+</style>
+{% endblock %}
+
+{% block reports_extra_js %}
+<!-- DataTables CSS y JS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+
+<!-- Chart.js para gráficos -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar DataTable
+    if (document.getElementById('diskGrowthTable')) {
+        $('#diskGrowthTable').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
+            },
+            "pageLength": 25,
+            "responsive": true,
+            "order": [[ 0, "desc" ]], // Ordenar por fecha descendente
+            "columnDefs": [
+                { "orderable": false, "targets": 9 } // Columna de acciones no ordenable
+            ]
+        });
+    }
+    
+    // Configurar botones de exportación
+    setupDiskGrowthExportButtons();
+    
+    // Dibujar gráfico de tendencia si hay datos
+    {% if tendencia %}
+    drawTendenciaChart();
+    {% endif %}
+});
+
+// Configurar botones de exportación
+function setupDiskGrowthExportButtons() {
+    // Export Excel
+    $('#export-excel-disk').on('click', function() {
+        exportDiskGrowthToExcel();
+    });
+    
+    // Export PDF
+    $('#export-pdf-disk').on('click', function() {
+        exportDiskGrowthToPDF();
+    });
+    
+    // Export CSV
+    $('#export-csv-disk').on('click', function() {
+        exportDiskGrowthToCSV();
+    });
+    
+    // Ejecutar SP
+    $('#run-monitor-sp').on('click', function() {
+        ejecutarMonitorSP();
+    });
+    
+    // Refresh
+    $('#refresh-disk').on('click', function() {
+        refreshDiskGrowthData();
+    });
+}
+
+function exportDiskGrowthToExcel() {
+    const params = new URLSearchParams(window.location.search);
+    const url = `{% url 'reportes:disk_growth' %}?format=excel&${params.toString()}`;
+    window.open(url, '_blank');
+    showNotification('Funcionalidad de Excel en desarrollo', 'info');
+}
+
+function exportDiskGrowthToPDF() {
+    showNotification('Funcionalidad de PDF en desarrollo', 'info');
+}
+
+function exportDiskGrowthToCSV() {
+    const table = document.getElementById('diskGrowthTable');
+    if (table) {
+        const csv = tableToCSV(table);
+        downloadCSV(csv, 'disk_growth_report.csv');
+        showNotification('Exportando a CSV...', 'success');
+    }
+}
+
+function ejecutarMonitorSP() {
+    showNotification('Ejecutando procedimiento de monitoreo...', 'info');
+    // Aquí podrías hacer una llamada AJAX para ejecutar el SP
+    setTimeout(() => {
+        location.reload();
+    }, 2000);
+}
+
+function refreshDiskGrowthData() {
+    showNotification('Actualizando datos de crecimiento de discos...', 'info');
+    setTimeout(() => {
+        location.reload();
+    }, 1000);
+}
+
+// Función para mostrar detalle en modal
+function mostrarDetalleDisk(serverIP, databaseName, fileName, fileSize, diskFree, filePath, logDate) {
+    document.getElementById('modalServerIP').textContent = serverIP;
+    document.getElementById('modalDatabaseName').textContent = databaseName;
+    document.getElementById('modalFileName').textContent = fileName;
+    document.getElementById('modalFileSize').textContent = fileSize;
+    document.getElementById('modalDiskFree').textContent = diskFree;
+    document.getElementById('modalFilePath').textContent = filePath;
+    document.getElementById('modalLogDate').textContent = logDate;
+    
+    // Calcular porcentaje libre
+    const fileSizeMB = parseFloat(fileSize);
+    const diskFreeMB = parseFloat(diskFree);
+    const totalSize = fileSizeMB + diskFreeMB;
+    const percentFree = totalSize > 0 ? (diskFreeMB / totalSize * 100).toFixed(2) : 0;
+    
+    const progressBar = document.getElementById('modalProgressBar');
+    progressBar.style.width = percentFree + '%';
+    progressBar.textContent = percentFree + '%';
+    progressBar.setAttribute('aria-valuenow', percentFree);
+    
+    // Asignar color según el porcentaje
+    progressBar.classList.remove('bg-success', 'bg-warning', 'bg-danger');
+    if (diskFreeMB < 10240) { // Menos de 10GB
+        progressBar.classList.add('bg-danger');
+    } else if (diskFreeMB < 51200) { // Menos de 50GB
+        progressBar.classList.add('bg-warning');
+    } else {
+        progressBar.classList.add('bg-success');
+    }
+    
+    var modal = new bootstrap.Modal(document.getElementById('detalleDiskModal'));
+    modal.show();
+}
+
+// Dibujar gráfico de tendencia
+{% if tendencia %}
+function drawTendenciaChart() {
+    const ctx = document.getElementById('tendenciaChart').getContext('2d');
+    
+    // Preparar datos para el gráfico
+    const labels = [];
+    const datasets = {};
+    
+    {% for item in tendencia %}
+        const fecha = '{{ item.Fecha|date:"d/m" }}';
+        const servidor = '{{ item.ServerIP }}';
+        const database = '{{ item.DatabaseName }}';
+        const key = servidor + ' - ' + database;
+        const tamano = {{ item.TamanoMB|default:0 }};
+        
+        if (!labels.includes(fecha)) {
+            labels.push(fecha);
+        }
+        
+        if (!datasets[key]) {
+            datasets[key] = {
+                label: key,
+                data: [],
+                borderWidth: 2,
+                fill: false
+            };
+        }
+        
+        const index = labels.indexOf(fecha);
+        datasets[key].data[index] = tamano;
+    {% endfor %}
+    
+    // Convertir objeto datasets a array
+    const datasetsArray = Object.values(datasets);
+    
+    // Limitar a las primeras 10 series para no saturar el gráfico
+    const limitedDatasets = datasetsArray.slice(0, 10);
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: limitedDatasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Evolución del Tamaño de Archivos (MB)'
+                },
+                legend: {
+                    display: true,
+                    position: 'bottom'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Tamaño (MB)'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Fecha'
+                    }
+                }
+            }
+        }
+    });
+}
+{% endif %}
+
+// Funciones utilitarias
+function tableToCSV(table) {
+    const rows = table.querySelectorAll('tr');
+    const csv = [];
+    
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const cols = row.querySelectorAll('td, th');
+        const csvRow = [];
+        
+        for (let j = 0; j < cols.length - 1; j++) { // Excluir columna de acciones
+            let cellText = cols[j].textContent.trim().replace(/"/g, '""');
+            csvRow.push(`"${cellText}"`); 
+        }
+        
+        csv.push(csvRow.join(','));
+    }
+    
+    return csv.join('\n');
+}
+
+function downloadCSV(csv, filename) {
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function showNotification(message, type) {
+    // Implementar notificación según tu framework
+    console.log(type + ': ' + message);
+    // Aquí podrías usar toastr, sweetalert2, o cualquier librería de notificaciones
+}
+</script>
+{% endblock %}

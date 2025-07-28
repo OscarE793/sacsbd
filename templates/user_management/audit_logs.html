@@ -1,0 +1,407 @@
+{% extends "reportes/reports_base.html" %}
+{% load static %}
+
+{% block title %}Logs de Auditoría - SACSBD{% endblock %}
+{% block page_title %}Logs de Auditoría{% endblock %}
+
+{% block report_title %}Logs de Auditoría{% endblock %}
+{% block report_subtitle %}Registro de todas las acciones realizadas en el sistema{% endblock %}
+
+{% block report_actions %}
+<div class="export-buttons">
+    <button type="button" class="btn btn-sm btn-info" onclick="exportLogs()">
+        <i class="ki-duotone ki-file-down fs-3">
+            <span class="path1"></span>
+            <span class="path2"></span>
+        </i>
+        Exportar
+    </button>
+    <a href="{% url 'user_management:list' %}" class="btn btn-sm btn-light">
+        <i class="ki-duotone ki-arrow-left fs-3">
+            <span class="path1"></span>
+            <span class="path2"></span>
+        </i>
+        Volver a Usuarios
+    </a>
+</div>
+{% endblock %}
+
+{% block report_filters %}
+<div class="filter-section">
+    <form method="GET" id="filter-form">
+        <div class="row align-items-end">
+            <div class="col-md-3">
+                <label class="form-label fs-6 fw-semibold text-dark">Usuario:</label>
+                <input type="text" name="user" class="form-control" 
+                       placeholder="Buscar por usuario..." 
+                       value="{{ request.GET.user }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fs-6 fw-semibold text-dark">Acción:</label>
+                <select name="action" class="form-select">
+                    <option value="">Todas las acciones</option>
+                    {% for action_value, action_label in actions %}
+                        <option value="{{ action_value }}" 
+                                {% if request.GET.action == action_value %}selected{% endif %}>
+                            {{ action_label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fs-6 fw-semibold text-dark">Desde:</label>
+                <input type="date" name="date_from" class="form-control" 
+                       value="{{ request.GET.date_from }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fs-6 fw-semibold text-dark">Hasta:</label>
+                <input type="date" name="date_to" class="form-control" 
+                       value="{{ request.GET.date_to }}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary btn-sm me-2">
+                    <i class="ki-duotone ki-magnifier fs-4">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                    </i>
+                    Filtrar
+                </button>
+                <a href="{% url 'user_management:audit_logs' %}" class="btn btn-light btn-sm">
+                    <i class="ki-duotone ki-cross fs-4">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                    </i>
+                    Limpiar
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block report_content %}
+
+<!-- Tabla de Logs -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Registro de Actividades</h6>
+    </div>
+    <div class="card-body">
+        {% if logs %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover" id="logsTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr class="text-center">
+                        <th>Fecha/Hora</th>
+                        <th>Usuario</th>
+                        <th>Acción</th>
+                        <th>Descripción</th>
+                        <th>IP</th>
+                        <th>Usuario Afectado</th>
+                        <th>Detalles</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr class="{% if log.action == 'failed_login' %}table-danger{% elif log.action == 'delete_user' %}table-warning{% endif %}" 
+                        style="font-size: smaller;">
+                        <td class="text-center">
+                            {{ log.timestamp|date:"d/m/Y H:i:s" }}
+                            <br>
+                            <small class="text-muted">{{ log.timestamp|timesince }} atrás</small>
+                        </td>
+                        <td class="text-center">
+                            {% if log.user %}
+                                <div class="d-flex align-items-center">
+                                    <div class="symbol symbol-35px me-2">
+                                        <div class="symbol-label bg-light-primary text-primary fw-bold">
+                                            {{ log.user.username|first|upper }}
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-start flex-column">
+                                        <span class="text-dark fw-bold">{{ log.user.username }}</span>
+                                        {% if log.user.get_full_name %}
+                                            <span class="text-muted fs-7">{{ log.user.get_full_name }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% else %}
+                                <span class="text-muted">Usuario eliminado</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if log.action == 'login' %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-sign-in-alt me-1"></i>{{ log.get_action_display }}
+                                </span>
+                            {% elif log.action == 'logout' %}
+                                <span class="badge bg-secondary">
+                                    <i class="fas fa-sign-out-alt me-1"></i>{{ log.get_action_display }}
+                                </span>
+                            {% elif log.action == 'failed_login' %}
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>{{ log.get_action_display }}
+                                </span>
+                            {% elif log.action in 'create_user,update_user,delete_user' %}
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-user-edit me-1"></i>{{ log.get_action_display }}
+                                </span>
+                            {% elif log.action == 'change_password' %}
+                                <span class="badge bg-info">
+                                    <i class="fas fa-key me-1"></i>{{ log.get_action_display }}
+                                </span>
+                            {% elif log.action in 'assign_role,remove_role' %}
+                                <span class="badge bg-primary">
+                                    <i class="fas fa-user-shield me-1"></i>{{ log.get_action_display }}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-light text-dark">
+                                    {{ log.get_action_display }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="text-start">
+                            {{ log.description|truncatewords:10 }}
+                        </td>
+                        <td class="text-center">
+                            {% if log.ip_address %}
+                                <code>{{ log.ip_address }}</code>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if log.affected_user %}
+                                <span class="text-primary">{{ log.affected_user.username }}</span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-info" 
+                                    onclick="viewLogDetails({{ log.id }})"
+                                    title="Ver detalles">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginación -->
+        {% if logs.has_other_pages %}
+        <nav aria-label="Paginación">
+            <ul class="pagination justify-content-center">
+                {% if logs.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&laquo; Primera</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ logs.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Anterior</a>
+                    </li>
+                {% endif %}
+                
+                <li class="page-item active">
+                    <span class="page-link">Página {{ logs.number }} de {{ logs.paginator.num_pages }}</span>
+                </li>
+                
+                {% if logs.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ logs.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Siguiente</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ logs.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Última &raquo;</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="alert alert-info d-flex align-items-center p-5">
+            <i class="ki-duotone ki-information-5 fs-2hx text-info me-4">
+                <span class="path1"></span>
+                <span class="path2"></span>
+                <span class="path3"></span>
+            </i>
+            <div class="d-flex flex-column">
+                <h4 class="mb-1 text-info">No hay registros</h4>
+                <span>No se encontraron logs de auditoría con los filtros aplicados.</span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal para ver detalles del log -->
+<div class="modal fade" id="logDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalles del Log</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="logDetailsContent">
+                <!-- Se llenará con JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block reports_extra_css %}
+<style>
+.symbol {
+    display: inline-flex;
+    flex-shrink: 0;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.symbol-35px {
+    width: 35px;
+    height: 35px;
+}
+
+.symbol-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+}
+
+.bg-light-primary {
+    background-color: #e1e9ff !important;
+}
+
+.table-danger {
+    background-color: #ffe5e5 !important;
+}
+
+.table-warning {
+    background-color: #fff9e5 !important;
+}
+
+code {
+    padding: 2px 4px;
+    font-size: 87.5%;
+    color: #e83e8c;
+    background-color: #f5f5f5;
+    border-radius: 3px;
+}
+</style>
+{% endblock %}
+
+{% block reports_extra_js %}
+<script>
+// Datos de ejemplo para los detalles del log (en producción vendría del servidor)
+const logsData = {
+    {% for log in logs %}
+    {{ log.id }}: {
+        user: "{{ log.user.username|default:'N/A' }}",
+        action: "{{ log.get_action_display }}",
+        description: "{{ log.description|escapejs }}",
+        timestamp: "{{ log.timestamp|date:'d/m/Y H:i:s' }}",
+        ip_address: "{{ log.ip_address|default:'N/A' }}",
+        user_agent: "{{ log.user_agent|truncatechars:100|default:'N/A'|escapejs }}",
+        affected_user: "{{ log.affected_user.username|default:'N/A' }}",
+        metadata: {{ log.metadata|default:'{}'|safe }}
+    },
+    {% endfor %}
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar DataTable
+    if (document.getElementById('logsTable')) {
+        $('#logsTable').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
+            },
+            "pageLength": 50,
+            "responsive": true,
+            "order": [[ 0, "desc" ]], // Ordenar por fecha descendente
+            "columnDefs": [
+                { "orderable": false, "targets": 6 } // Columna de detalles no ordenable
+            ]
+        });
+    }
+});
+
+// Función para ver detalles del log
+function viewLogDetails(logId) {
+    const log = logsData[logId];
+    if (!log) return;
+    
+    let content = `
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Usuario:</label>
+                <p class="text-gray-800">${log.user}</p>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Acción:</label>
+                <p class="text-gray-800">${log.action}</p>
+            </div>
+            <div class="col-md-12 mb-3">
+                <label class="form-label fw-bold">Descripción:</label>
+                <p class="text-gray-800">${log.description}</p>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Fecha/Hora:</label>
+                <p class="text-gray-800">${log.timestamp}</p>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Dirección IP:</label>
+                <p class="text-gray-800"><code>${log.ip_address}</code></p>
+            </div>
+            <div class="col-md-12 mb-3">
+                <label class="form-label fw-bold">User Agent:</label>
+                <p class="text-gray-800 small">${log.user_agent}</p>
+            </div>
+    `;
+    
+    if (log.affected_user !== 'N/A') {
+        content += `
+            <div class="col-md-12 mb-3">
+                <label class="form-label fw-bold">Usuario Afectado:</label>
+                <p class="text-gray-800">${log.affected_user}</p>
+            </div>
+        `;
+    }
+    
+    if (Object.keys(log.metadata).length > 0) {
+        content += `
+            <div class="col-md-12 mb-3">
+                <label class="form-label fw-bold">Metadatos Adicionales:</label>
+                <pre class="bg-light p-3 rounded">${JSON.stringify(log.metadata, null, 2)}</pre>
+            </div>
+        `;
+    }
+    
+    content += '</div>';
+    
+    document.getElementById('logDetailsContent').innerHTML = content;
+    
+    var modal = new bootstrap.Modal(document.getElementById('logDetailsModal'));
+    modal.show();
+}
+
+// Función para exportar logs
+function exportLogs() {
+    const params = new URLSearchParams(window.location.search);
+    params.append('export', 'csv');
+    
+    // Aquí iría la lógica para descargar el archivo
+    alert('Función de exportación en desarrollo.\n\nSe exportarían los logs con los filtros actuales a un archivo CSV.');
+}
+</script>
+{% endblock %}

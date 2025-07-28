@@ -1,0 +1,558 @@
+{% extends "reportes/reports_base.html" %}
+{% load static %}
+
+{% block title %}Gestión de Usuarios - SACSBD{% endblock %}
+{% block page_title %}Gestión de Usuarios{% endblock %}
+
+{% block report_title %}Gestión de Usuarios{% endblock %}
+{% block report_subtitle %}Administra los usuarios del sistema y sus permisos{% endblock %}
+
+{% block report_actions %}
+<div class="export-buttons">
+    <a href="{% url 'user_management:create' %}" class="btn btn-sm btn-success">
+        <i class="ki-duotone ki-plus fs-3">
+            <span class="path1"></span>
+            <span class="path2"></span>
+        </i>
+        Nuevo Usuario
+    </a>
+    <a href="{% url 'user_management:roles_list' %}" class="btn btn-sm btn-info">
+        <i class="ki-duotone ki-security-user fs-3">
+            <span class="path1"></span>
+            <span class="path2"></span>
+        </i>
+        Gestionar Roles
+    </a>
+    <a href="{% url 'user_management:audit_logs' %}" class="btn btn-sm btn-warning">
+        <i class="ki-duotone ki-document fs-3">
+            <span class="path1"></span>
+            <span class="path2"></span>
+        </i>
+        Logs de Auditoría
+    </a>
+    <button type="button" class="btn btn-sm btn-light" id="refresh-users">
+        <i class="ki-duotone ki-arrows-circle fs-3">
+            <span class="path1"></span>
+            <span class="path2"></span>
+        </i>
+        Actualizar
+    </button>
+</div>
+{% endblock %}
+
+{% block report_filters %}
+<div class="filter-section">
+    <form method="GET" id="filter-form">
+        <div class="row align-items-end">
+            <div class="col-md-3">
+                <label class="form-label fs-6 fw-semibold text-dark">Buscar:</label>
+                {{ filter_form.search }}
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fs-6 fw-semibold text-dark">Rol:</label>
+                {{ filter_form.role }}
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fs-6 fw-semibold text-dark">Estado:</label>
+                {{ filter_form.is_active }}
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fs-6 fw-semibold text-dark">Staff:</label>
+                {{ filter_form.is_staff }}
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary btn-sm me-2">
+                    <i class="ki-duotone ki-magnifier fs-4">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                    </i>
+                    Filtrar
+                </button>
+                <a href="{% url 'user_management:list' %}" class="btn btn-light btn-sm">
+                    <i class="ki-duotone ki-cross fs-4">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                    </i>
+                    Limpiar
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block report_content %}
+
+<!-- Estadísticas con estilo Metronic -->
+{% if stats %}
+<div class="row g-5 g-xl-10 mb-5 mb-xl-10">
+    <div class="col-md-6 col-lg-6 col-xl-3 col-xxl-3 mb-md-5 mb-xl-10">
+        <div class="card card-flush bgi-no-repeat bgi-size-contain bgi-position-x-end h-md-50 mb-5 mb-xl-10" style="background-color: #F1416C;background-image:url('{% static 'assets/media/patterns/vector-1.png' %}')">
+            <div class="card-header pt-5">
+                <div class="card-title d-flex flex-column">
+                    <span class="fs-2hx fw-bold text-white me-2 lh-1 ls-n2">{{ stats.total }}</span>
+                    <span class="text-white opacity-75 pt-1 fw-semibold fs-6">Total Usuarios</span>
+                </div>
+            </div>
+            <div class="card-body d-flex align-items-end pt-0">
+                <div class="d-flex align-items-center flex-column mt-3 w-100">
+                    <div class="d-flex justify-content-between w-100 mt-auto mb-2">
+                        <span class="fw-bolder fs-6 text-white opacity-75">Usuarios registrados</span>
+                        <span class="fw-bold fs-6 text-white">100%</span>
+                    </div>
+                    <div class="h-8px mx-3 w-100 bg-white bg-opacity-50 rounded">
+                        <div class="bg-white rounded h-8px" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-6 col-xl-3 col-xxl-3 mb-md-5 mb-xl-10">
+        <div class="card card-flush bgi-no-repeat bgi-size-contain bgi-position-x-end h-md-50 mb-5 mb-xl-10" style="background-color: #50CD89;background-image:url('{% static 'assets/media/patterns/vector-1.png' %}')">
+            <div class="card-header pt-5">
+                <div class="card-title d-flex flex-column">
+                    <span class="fs-2hx fw-bold text-white me-2 lh-1 ls-n2">{{ stats.active }}</span>
+                    <span class="text-white opacity-75 pt-1 fw-semibold fs-6">Usuarios Activos</span>
+                </div>
+            </div>
+            <div class="card-body d-flex align-items-end pt-0">
+                <div class="d-flex align-items-center flex-column mt-3 w-100">
+                    <div class="d-flex justify-content-between w-100 mt-auto mb-2">
+                        <span class="fw-bolder fs-6 text-white opacity-75">Del total</span>
+                        <span class="fw-bold fs-6 text-white">{% widthratio stats.active stats.total 100 %}%</span>
+                    </div>
+                    <div class="h-8px mx-3 w-100 bg-white bg-opacity-50 rounded">
+                        <div class="bg-white rounded h-8px" role="progressbar" style="width: {% widthratio stats.active stats.total 100 %}%;" aria-valuenow="{% widthratio stats.active stats.total 100 %}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-6 col-xl-3 col-xxl-3 mb-md-5 mb-xl-10">
+        <div class="card card-flush bgi-no-repeat bgi-size-contain bgi-position-x-end h-md-50 mb-5 mb-xl-10" style="background-color: #7239EA;background-image:url('{% static 'assets/media/patterns/vector-1.png' %}')">
+            <div class="card-header pt-5">
+                <div class="card-title d-flex flex-column">
+                    <span class="fs-2hx fw-bold text-white me-2 lh-1 ls-n2">{{ stats.staff }}</span>
+                    <span class="text-white opacity-75 pt-1 fw-semibold fs-6">Staff</span>
+                </div>
+            </div>
+            <div class="card-body d-flex align-items-end pt-0">
+                <div class="d-flex align-items-center flex-column mt-3 w-100">
+                    <div class="d-flex justify-content-between w-100 mt-auto mb-2">
+                        <span class="fw-bolder fs-6 text-white opacity-75">Administradores</span>
+                        <span class="fw-bold fs-6 text-white">{% widthratio stats.staff stats.total 100 %}%</span>
+                    </div>
+                    <div class="h-8px mx-3 w-100 bg-white bg-opacity-50 rounded">
+                        <div class="bg-white rounded h-8px" role="progressbar" style="width: {% widthratio stats.staff stats.total 100 %}%;" aria-valuenow="{% widthratio stats.staff stats.total 100 %}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-6 col-xl-3 col-xxl-3 mb-md-5 mb-xl-10">
+        <div class="card card-flush bgi-no-repeat bgi-size-contain bgi-position-x-end h-md-50 mb-5 mb-xl-10" style="background-color: #FFC700;background-image:url('{% static 'assets/media/patterns/vector-1.png' %}')">
+            <div class="card-header pt-5">
+                <div class="card-title d-flex flex-column">
+                    <span class="fs-2hx fw-bold text-white me-2 lh-1 ls-n2">{{ stats.with_roles }}</span>
+                    <span class="text-white opacity-75 pt-1 fw-semibold fs-6">Con Roles</span>
+                </div>
+            </div>
+            <div class="card-body d-flex align-items-end pt-0">
+                <div class="d-flex align-items-center flex-column mt-3 w-100">
+                    <div class="d-flex justify-content-between w-100 mt-auto mb-2">
+                        <span class="fw-bolder fs-6 text-white opacity-75">Con permisos</span>
+                        <span class="fw-bold fs-6 text-white">{% widthratio stats.with_roles stats.total 100 %}%</span>
+                    </div>
+                    <div class="h-8px mx-3 w-100 bg-white bg-opacity-50 rounded">
+                        <div class="bg-white rounded h-8px" role="progressbar" style="width: {% widthratio stats.with_roles stats.total 100 %}%;" aria-valuenow="{% widthratio stats.with_roles stats.total 100 %}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Tabla de usuarios con estilo Metronic -->
+<div class="card">
+    <div class="card-header border-0 pt-6">
+        <div class="card-title">
+            <div class="d-flex align-items-center position-relative my-1">
+                <i class="ki-duotone ki-magnifier fs-3 position-absolute ms-5">
+                    <span class="path1"></span>
+                    <span class="path2"></span>
+                </i>
+                <input type="text" data-kt-user-table-filter="search" class="form-control form-control-solid w-250px ps-13" placeholder="Buscar usuario..." />
+            </div>
+        </div>
+        <div class="card-toolbar">
+            <div class="d-flex justify-content-end" data-kt-user-table-toolbar="base">
+                <button type="button" class="btn btn-light-primary me-3" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
+                    <i class="ki-duotone ki-filter fs-2">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                    </i>
+                    Filtros
+                </button>
+                <div class="menu menu-sub menu-sub-dropdown w-300px w-md-325px" data-kt-menu="true">
+                    <div class="px-7 py-5">
+                        <div class="fs-5 text-dark fw-bold">Opciones de filtro</div>
+                    </div>
+                    <div class="separator border-gray-200"></div>
+                    <div class="px-7 py-5" data-kt-user-table-filter="form">
+                        <div class="mb-10">
+                            <label class="form-label fs-6 fw-semibold">Rol:</label>
+                            <select class="form-select form-select-solid fw-bold" data-kt-select2="true" data-placeholder="Seleccionar rol" data-allow-clear="true" data-kt-user-table-filter="role" data-hide-search="true">
+                                <option></option>
+                                <option value="Administrator">Administrador</option>
+                                <option value="Analyst">Analista</option>
+                                <option value="Developer">Desarrollador</option>
+                                <option value="Support">Soporte</option>
+                                <option value="Trial">Prueba</option>
+                            </select>
+                        </div>
+                        <div class="mb-10">
+                            <label class="form-label fs-6 fw-semibold">Estado:</label>
+                            <select class="form-select form-select-solid fw-bold" data-kt-select2="true" data-placeholder="Seleccionar estado" data-allow-clear="true" data-kt-user-table-filter="two-step" data-hide-search="true">
+                                <option></option>
+                                <option value="Enabled">Activo</option>
+                                <option value="Disabled">Inactivo</option>
+                            </select>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button type="reset" class="btn btn-light btn-active-light-primary fw-semibold me-2 px-6" data-kt-menu-dismiss="true" data-kt-user-table-filter="reset">Limpiar</button>
+                            <button type="submit" class="btn btn-primary fw-semibold px-6" data-kt-menu-dismiss="true" data-kt-user-table-filter="filter">Aplicar</button>
+                        </div>
+                    </div>
+                </div>
+                <a href="{% url 'user_management:create' %}" class="btn btn-primary">
+                    <i class="ki-duotone ki-plus fs-2"></i>
+                    Agregar Usuario
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card-body py-4">
+        {% if users %}
+        <div class="table-responsive">
+            <table class="table align-middle table-row-dashed fs-6 gy-5" id="kt_table_users">
+                <thead>
+                    <tr class="text-start text-muted fw-bold fs-7 text-uppercase gs-0">
+                        <th class="w-10px pe-2">
+                            <div class="form-check form-check-sm form-check-custom form-check-solid me-3">
+                                <input class="form-check-input" type="checkbox" data-kt-check="true" data-kt-check-target="#kt_table_users .form-check-input" value="1" />
+                            </div>
+                        </th>
+                        <th class="min-w-125px">Usuario</th>
+                        <th class="min-w-125px">Rol</th>
+                        <th class="min-w-125px">Último login</th>
+                        <th class="min-w-125px">Fecha creación</th>
+                        <th class="text-end min-w-100px">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="text-gray-600 fw-semibold">
+                    {% for user in users %}
+                    <tr>
+                        <td>
+                            <div class="form-check form-check-sm form-check-custom form-check-solid">
+                                <input class="form-check-input" type="checkbox" value="{{ user.pk }}" />
+                            </div>
+                        </td>
+                        <td class="d-flex align-items-center">
+                            <div class="symbol symbol-circle symbol-50px overflow-hidden me-3">
+                                <a href="{% url 'user_management:detail' user.pk %}">
+                                    <div class="symbol-label">
+                                        <div class="symbol-label fs-3 bg-light-primary text-primary">
+                                            {{ user.username|first|upper }}
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="d-flex flex-column">
+                                <a href="{% url 'user_management:detail' user.pk %}" class="text-gray-800 text-hover-primary mb-1">{{ user.username }}</a>
+                                <span>{{ user.email|default:"-" }}</span>
+                                {% if user.get_full_name %}
+                                    <small class="text-muted">{{ user.get_full_name }}</small>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            {% for user_role in user.userrole_set.all %}
+                                {% if user_role.activo %}
+                                    <div class="badge badge-light-primary fw-bold">{{ user_role.role.name }}</div>
+                                {% endif %}
+                            {% empty %}
+                                <div class="badge badge-light-secondary fw-bold">Sin roles</div>
+                            {% endfor %}
+                        </td>
+                        <td>
+                            {% if user.last_login %}
+                                <div class="badge badge-light fw-bold">{{ user.last_login|date:"d/m/Y H:i" }}</div>
+                            {% else %}
+                                <div class="badge badge-light-warning fw-bold">Nunca</div>
+                            {% endif %}
+                        </td>
+                        <td>{{ user.date_joined|date:"d/m/Y" }}</td>
+                        <td class="text-end">
+                            <a href="#" class="btn btn-light btn-active-light-primary btn-flex btn-center btn-sm" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
+                                Acciones
+                                <i class="ki-duotone ki-down fs-5 ms-1"></i>
+                            </a>
+                            <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-semibold fs-7 w-125px py-4" data-kt-menu="true">
+                                <div class="menu-item px-3">
+                                    <a href="{% url 'user_management:detail' user.pk %}" class="menu-link px-3">Ver</a>
+                                </div>
+                                <div class="menu-item px-3">
+                                    <a href="{% url 'user_management:edit' user.pk %}" class="menu-link px-3">Editar</a>
+                                </div>
+                                <div class="menu-item px-3">
+                                    <a href="#" class="menu-link px-3" data-kt-users-table-filter="delete_row" onclick="toggleUserStatus({{ user.pk }})">
+                                        {% if user.is_active %}Desactivar{% else %}Activar{% endif %}
+                                    </a>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginación -->
+        {% if users.has_other_pages %}
+        <div class="row">
+            <div class="col-sm-12 col-md-5 d-flex align-items-center justify-content-center justify-content-md-start">
+                <div class="dataTables_length">
+                    <span class="text-muted">Mostrando {{ users.start_index }} - {{ users.end_index }} de {{ users.paginator.count }} usuarios</span>
+                </div>
+            </div>
+            <div class="col-sm-12 col-md-7 d-flex align-items-center justify-content-center justify-content-md-end">
+                <div class="dataTables_paginate paging_simple_numbers">
+                    <ul class="pagination">
+                        {% if users.has_previous %}
+                            <li class="paginate_button page-item previous">
+                                <a href="?page={{ users.previous_page_number }}" class="page-link">
+                                    <i class="previous"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        <li class="paginate_button page-item active">
+                            <span class="page-link">{{ users.number }}</span>
+                        </li>
+                        
+                        {% if users.has_next %}
+                            <li class="paginate_button page-item next">
+                                <a href="?page={{ users.next_page_number }}" class="page-link">
+                                    <i class="next"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <div class="d-flex flex-column flex-center">
+            <img src="{% static 'assets/media/illustrations/sketchy-1/5.png' %}" class="mw-400px">
+            <div class="fs-1 fw-bolder text-dark mb-4">No hay usuarios.</div>
+            <div class="fs-6">No se encontraron usuarios con los filtros aplicados.
+            <br>Prueba a limpiar los filtros o crear un nuevo usuario.</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block reports_extra_css %}
+<style>
+/* Estilos personalizados para mejorar la apariencia */
+#kt_table_users .symbol-label {
+    font-weight: 600;
+}
+
+.table-responsive {
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+
+.symbol-circle {
+    border-radius: 50%;
+}
+
+.badge {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+}
+</style>
+{% endblock %}
+
+{% block reports_extra_js %}
+<!-- DataTables CSS y JS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar DataTable
+    if (document.getElementById('kt_table_users')) {
+        $('#kt_table_users').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
+            },
+            "pageLength": 25,
+            "responsive": true,
+            "order": [[ 1, "asc" ]], // Ordenar por usuario
+            "columnDefs": [
+                { "orderable": false, "targets": [0, 5] } // Checkbox y columna de acciones no ordenables
+            ]
+        });
+    }
+    
+    // Configurar botón de refresh
+    $('#refresh-users').on('click', function() {
+        location.reload();
+    });
+});
+
+// Función para cambiar estado de usuario
+function toggleUserStatus(userId) {
+    Swal.fire({
+        text: "¿Estás seguro de cambiar el estado de este usuario?",
+        icon: "warning",
+        showCancelButton: true,
+        buttonsStyling: false,
+        confirmButtonText: "Sí, cambiar estado",
+        cancelButtonText: "No, cancelar",
+        customClass: {
+            confirmButton: "btn fw-bold btn-danger",
+            cancelButton: "btn fw-bold btn-active-light-primary"
+        }
+    }).then(function (result) {
+        if (result.value) {
+            fetch(`{% url 'user_management:toggle_status' 0 %}`.replace('0', userId), {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        text: data.message,
+                        icon: "success",
+                        buttonsStyling: false,
+                        confirmButtonText: "Ok, entendido!",
+                        customClass: {
+                            confirmButton: "btn fw-bold btn-primary",
+                        }
+                    }).then(function () {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        text: data.message,
+                        icon: "error",
+                        buttonsStyling: false,
+                        confirmButtonText: "Ok, entendido!",
+                        customClass: {
+                            confirmButton: "btn fw-bold btn-primary",
+                        }
+                    });
+                }
+            })
+            .catch(error => {
+                Swal.fire({
+                    text: 'Error al cambiar estado del usuario',
+                    icon: "error",
+                    buttonsStyling: false,
+                    confirmButtonText: "Ok, entendido!",
+                    customClass: {
+                        confirmButton: "btn fw-bold btn-primary",
+                    }
+                });
+            });
+        }
+    });
+}
+
+// Función para resetear intentos fallidos
+function resetFailedAttempts(userId) {
+    Swal.fire({
+        text: "¿Deseas resetear los intentos fallidos de este usuario?",
+        icon: "warning",
+        showCancelButton: true,
+        buttonsStyling: false,
+        confirmButtonText: "Sí, resetear",
+        cancelButtonText: "No, cancelar",
+        customClass: {
+            confirmButton: "btn fw-bold btn-success",
+            cancelButton: "btn fw-bold btn-active-light-primary"
+        }
+    }).then(function (result) {
+        if (result.value) {
+            fetch(`{% url 'user_management:reset_attempts' 0 %}`.replace('0', userId), {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        text: data.message,
+                        icon: "success",
+                        buttonsStyling: false,
+                        confirmButtonText: "Ok, entendido!",
+                        customClass: {
+                            confirmButton: "btn fw-bold btn-primary",
+                        }
+                    }).then(function () {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        text: data.message,
+                        icon: "error",
+                        buttonsStyling: false,
+                        confirmButtonText: "Ok, entendido!",
+                        customClass: {
+                            confirmButton: "btn fw-bold btn-primary",
+                        }
+                    });
+                }
+            })
+            .catch(error => {
+                Swal.fire({
+                    text: 'Error al resetear intentos fallidos',
+                    icon: "error",
+                    buttonsStyling: false,
+                    confirmButtonText: "Ok, entendido!",
+                    customClass: {
+                        confirmButton: "btn fw-bold btn-primary",
+                    }
+                });
+            });
+        }
+    });
+}
+
+// Sobrescribir función de refresh específica
+function refreshSpecificReport() {
+    location.reload();
+}
+</script>
+{% endblock %}

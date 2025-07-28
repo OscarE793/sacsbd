@@ -1,0 +1,424 @@
+{% extends "reportes/reports_base.html" %}
+{% load static %}
+
+{% block title %}Cumplimiento ejecución de copias - SACSBD{% endblock %}
+{% block page_title %}Cumplimiento backups programados{% endblock %}
+
+{% block report_title %}Cumplimiento backups programados{% endblock %}
+{% block report_subtitle %}Esta función le permite verificar cuantas copias de seguridad se generaron efectivamente{% endblock %}
+
+{% block report_actions %}
+<div class="export-buttons">
+    <button type="button" class="btn btn-sm btn-success" id="export-excel-cumplimiento">
+        <i class="ki-duotone ki-file-down fs-3">
+            <span class="path1"></span>
+            <span class="path2"></span>
+        </i>
+        Excel
+    </button>
+    <button type="button" class="btn btn-sm btn-danger" id="export-pdf-cumplimiento">
+        <i class="ki-duotone ki-file-text fs-3">
+            <span class="path1"></span>
+            <span class="path2"></span>
+        </i>
+        PDF
+    </button>
+    <button type="button" class="btn btn-sm btn-info" id="export-csv-cumplimiento">
+        <i class="ki-duotone ki-document fs-3">
+            <span class="path1"></span>
+            <span class="path2"></span>
+        </i>
+        CSV
+    </button>
+    <button type="button" class="btn btn-sm btn-light" id="refresh-cumplimiento">
+        <i class="ki-duotone ki-arrows-circle fs-3">
+            <span class="path1"></span>
+            <span class="path2"></span>
+        </i>
+        Actualizar
+    </button>
+</div>
+{% endblock %}
+
+{% block report_filters %}
+<div class="filter-section">
+    <form method="GET" id="filter-form">
+        <div class="row align-items-end">
+            <div class="col-md-4">
+                <label class="form-label fs-6 fw-semibold text-dark">Fecha Inicio:</label>
+                <input type="date" class="form-control form-control-sm" name="fecha" 
+                       value="{{ fecha_inicio }}" id="fecha_inicio">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fs-6 fw-semibold text-dark">Fecha Final:</label>
+                <input type="date" class="form-control form-control-sm" name="fecha1" 
+                       value="{{ fecha_fin }}" id="fecha_fin">
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary btn-sm me-2">
+                    <i class="ki-duotone ki-magnifier fs-4">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                    </i>
+                    Buscar
+                </button>
+                <a href="{% url 'reportes:cumplimiento_backup' %}" class="btn btn-light btn-sm">
+                    <i class="ki-duotone ki-cross fs-4">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                    </i>
+                    Limpiar
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block report_content %}
+
+<!-- Mensajes de error/éxito -->
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<!-- Error específico -->
+{% if error %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>Error:</strong> {{ error }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+{% endif %}
+
+<!-- Estadísticas -->
+{% if estadisticas %}
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Registros</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ estadisticas.total_registros }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-database fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Copias Ejecutadas</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ estadisticas.total_ejecutadas }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Copias Programadas</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ estadisticas.total_programadas }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">% Cumplimiento</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ estadisticas.promedio_cumplimiento|floatformat:2 }}%</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-percentage fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Tabla de cumplimiento -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Resultados de Cumplimiento - sp_Programaciondebcks</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="cumplimientoTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr class="text-center">
+                        <th>Servidor</th>
+                        <th>Nombre DB</th>
+                        <th>IP servidor</th>
+                        <th>Copias ejecutadas</th>
+                        <th>Copias programadas</th>
+                        <th>% Cumplimiento</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if resultadosCump %}
+                        {% for x in resultadosCump %}
+                        <tr class="text-center" style="font-size: smaller;">
+                            <td class="text-center">{{ x.SERVIDOR }}</td>
+                            <td class="text-center">{{ x.DatabaseName }}</td>
+                            <td class="text-center">{{ x.IPSERVER }}</td>
+                            <td class="text-center">
+                                <span class="badge bg-info">{{ x.TOTAL }}</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-secondary">{{ x.TOTALPROGRAM }}</span>
+                            </td>
+                            <td class="text-center">
+                                {% if x.PORCENTAJE >= 90 %}
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check-circle me-1"></i>{{ x.PORCENTAJE|floatformat:0 }}%
+                                    </span>
+                                {% elif x.PORCENTAJE >= 70 %}
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>{{ x.PORCENTAJE|floatformat:0 }}%
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-danger">
+                                        <i class="fas fa-times-circle me-1"></i>{{ x.PORCENTAJE|floatformat:0 }}%
+                                    </span>
+                                {% endif %}
+                            </td>                            
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr class="text-center" style="font-size: smaller;">
+                            <td class="text-center" colspan="6">
+                                <div class="alert alert-info">
+                                    <h5><i class="fas fa-info-circle me-2"></i>No hay datos</h5>
+                                    <p>Seleccione un rango de fechas para consultar los datos de cumplimiento.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Sección de descarga para rangos personalizados -->
+        <hr>
+        <div class="card bg-light">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-download me-2"></i>Descarga de Reporte Personalizado
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Genere un reporte de Excel con datos de un rango específico (hasta un mes).</p>
+                <form action="{% url 'reportes:reporte_cumplimiento' %}" method="get" autocomplete="off">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label class="form-label">Fecha inicio:</label>
+                            <input type="date" name="fecha" value="{{ fecha_inicio }}" class="form-control">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Fecha final:</label>
+                            <input type="date" name="fecha1" value="{{ fecha_fin }}" class="form-control">
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-success me-2">
+                                <i class="fas fa-file-excel me-1"></i>Descargar Excel
+                            </button>
+                            <button type="reset" class="btn btn-secondary">
+                                <i class="fas fa-eraser me-1"></i>Limpiar
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block reports_extra_css %}
+<style>
+.badge {
+    font-size: 0.8em;
+    padding: 0.4em 0.8em;
+}
+
+.border-left-primary {
+    border-left: 0.25rem solid #4e73df !important;
+}
+
+.border-left-success {
+    border-left: 0.25rem solid #1cc88a !important;
+}
+
+.border-left-info {
+    border-left: 0.25rem solid #36b9cc !important;
+}
+
+.border-left-warning {
+    border-left: 0.25rem solid #f6c23e !important;
+}
+
+.text-gray-800 {
+    color: #5a5c69 !important;
+}
+
+.text-gray-300 {
+    color: #dddfeb !important;
+}
+</style>
+{% endblock %}
+
+{% block reports_extra_js %}
+<!-- DataTables CSS y JS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar DataTable
+    if (document.getElementById('cumplimientoTable')) {
+        $('#cumplimientoTable').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
+            },
+            "pageLength": 25,
+            "responsive": true,
+            "order": [[ 5, "asc" ]] // Ordenar por porcentaje de cumplimiento ascendente
+        });
+    }
+    
+    // Configurar botones de exportación específicos para cumplimiento
+    setupCumplimientoExportButtons();
+    
+    // Funcionalidad para búsqueda con Ctrl+G
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.key === 'g') {
+            e.preventDefault();
+            const searchBox = document.querySelector('.dataTables_filter input');
+            if (searchBox) {
+                searchBox.focus();
+            }
+        }
+    });
+});
+
+// Funciones específicas para cumplimiento
+function setupCumplimientoExportButtons() {
+    // Export Excel para cumplimiento
+    $('#export-excel-cumplimiento').on('click', function() {
+        exportCumplimientoToExcel();
+    });
+    
+    // Export PDF para cumplimiento
+    $('#export-pdf-cumplimiento').on('click', function() {
+        exportCumplimientoToPDF();
+    });
+    
+    // Export CSV para cumplimiento
+    $('#export-csv-cumplimiento').on('click', function() {
+        exportCumplimientoToCSV();
+    });
+    
+    // Refresh específico para cumplimiento
+    $('#refresh-cumplimiento').on('click', function() {
+        refreshCumplimientoData();
+    });
+}
+
+function exportCumplimientoToExcel() {
+    const params = new URLSearchParams(window.location.search);
+    const url = `{% url 'reportes:reporte_cumplimiento' %}?${params.toString()}`;
+    window.open(url, '_blank');
+    showNotification('Descargando reporte de cumplimiento en Excel...', 'success');
+}
+
+function exportCumplimientoToPDF() {
+    showNotification('Funcionalidad de PDF en desarrollo', 'info');
+}
+
+function exportCumplimientoToCSV() {
+    // Exportar tabla actual a CSV
+    const table = document.getElementById('cumplimientoTable');
+    if (table) {
+        const csv = tableToCSV(table);
+        downloadCSV(csv, 'cumplimiento_backup.csv');
+        showNotification('Exportando a CSV...', 'success');
+    }
+}
+
+function refreshCumplimientoData() {
+    showNotification('Actualizando datos de cumplimiento...', 'info');
+    setTimeout(() => {
+        location.reload();
+    }, 1000);
+}
+
+// Funciones utilitarias específicas para cumplimiento
+function tableToCSV(table) {
+    const rows = table.querySelectorAll('tr');
+    const csv = [];
+    
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const cols = row.querySelectorAll('td, th');
+        const csvRow = [];
+        
+        for (let j = 0; j < cols.length; j++) {
+            // Limpiar el texto del contenido de badges e iconos
+            let cellText = cols[j].textContent.trim().replace(/"/g, '""');
+            csvRow.push(`"${cellText}"`); 
+        }
+        
+        csv.push(csvRow.join(','));
+    }
+    
+    return csv.join('\n');
+}
+
+function downloadCSV(csv, filename) {
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Sobrescribir función de refresh específica
+function refreshSpecificReport() {
+    refreshCumplimientoData();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,314 @@
+/* ==============================================
+   SACS_BD - Tema Personalizado
+   Basado en Metronic v9.2.2
+   ============================================== */
+
+:root {
+    /* Colores corporativos SACS_BD */
+    --sacs-primary: #1b84ff;
+    --sacs-primary-light: #4da3ff;
+    --sacs-primary-dark: #0056cc;
+    --sacs-primary-rgb: 27, 132, 255;
+    
+    --sacs-secondary: #6c757d;
+    --sacs-success: #50cd89;
+    --sacs-danger: #f1416c;
+    --sacs-warning: #ffc700;
+    --sacs-info: #7239ea;
+    
+    /* Grises corporativos */
+    --sacs-gray-100: #f5f8fa;
+    --sacs-gray-200: #eff2f5;
+    --sacs-gray-300: #e4e6ea;
+    --sacs-gray-400: #b5b5c3;
+    --sacs-gray-500: #a1a5b7;
+    --sacs-gray-600: #7e8299;
+    --sacs-gray-700: #5e6278;
+    --sacs-gray-800: #3f4254;
+    --sacs-gray-900: #181c32;
+    
+    /* Sombras */
+    --sacs-shadow-xs: 0 0.125rem 0.25rem rgba(var(--sacs-primary-rgb), 0.075);
+    --sacs-shadow-sm: 0 0.25rem 0.5rem rgba(var(--sacs-primary-rgb), 0.1);
+    --sacs-shadow-md: 0 0.5rem 1rem rgba(var(--sacs-primary-rgb), 0.15);
+    --sacs-shadow-lg: 0 1rem 3rem rgba(var(--sacs-primary-rgb), 0.175);
+    --sacs-shadow-xl: 0 1.5rem 4rem rgba(var(--sacs-primary-rgb), 0.2);
+}
+
+/* ========================================
+   Override de colores primarios Metronic
+   ======================================== */
+
+/* Botones primarios */
+.btn-primary {
+    background: linear-gradient(135deg, var(--sacs-primary) 0%, var(--sacs-primary-light) 100%);
+    border-color: var(--sacs-primary);
+    color: white;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: var(--sacs-shadow-sm);
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary.focus {
+    background: linear-gradient(135deg, var(--sacs-primary-dark) 0%, var(--sacs-primary) 100%);
+    border-color: var(--sacs-primary-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--sacs-shadow-md);
+}
+
+/* Links primarios */
+.text-primary {
+    color: var(--sacs-primary) !important;
+}
+
+.text-hover-primary:hover {
+    color: var(--sacs-primary-dark) !important;
+}
+
+/* Backgrounds primarios */
+.bg-primary {
+    background-color: var(--sacs-primary) !important;
+}
+
+.bg-light-primary {
+    background-color: rgba(var(--sacs-primary-rgb), 0.1) !important;
+}
+
+/* ========================================
+   Componentes personalizados SACS_BD
+   ======================================== */
+
+/* Cards mejoradas */
+.sacs-card {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: var(--sacs-shadow-sm);
+    border: 1px solid var(--sacs-gray-200);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    overflow: hidden;
+    position: relative;
+}
+
+.sacs-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, var(--sacs-primary) 0%, var(--sacs-primary-light) 100%);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.sacs-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--sacs-shadow-xl);
+}
+
+.sacs-card:hover::before {
+    transform: scaleX(1);
+}
+
+/* KPI Cards especiales */
+.sacs-kpi-card {
+    background: linear-gradient(135deg, var(--sacs-primary) 0%, var(--sacs-primary-light) 100%);
+    color: white;
+    border-radius: 1.25rem;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.sacs-kpi-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 200%;
+    background: rgba(255, 255, 255, 0.1);
+    transform: rotate(45deg);
+    transition: all 0.3s ease;
+}
+
+.sacs-kpi-card:hover::before {
+    right: -40%;
+}
+
+.sacs-kpi-value {
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+    position: relative;
+    z-index: 2;
+}
+
+.sacs-kpi-label {
+    font-size: 0.875rem;
+    opacity: 0.9;
+    position: relative;
+    z-index: 2;
+}
+
+.sacs-kpi-trend {
+    position: relative;
+    z-index: 2;
+    font-size: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+/* Variaciones de color para KPIs */
+.sacs-kpi-card.success {
+    background: linear-gradient(135deg, var(--sacs-success) 0%, #6dd17a 100%);
+}
+
+.sacs-kpi-card.warning {
+    background: linear-gradient(135deg, var(--sacs-warning) 0%, #ffd84a 100%);
+}
+
+.sacs-kpi-card.danger {
+    background: linear-gradient(135deg, var(--sacs-danger) 0%, #f4618c 100%);
+}
+
+.sacs-kpi-card.info {
+    background: linear-gradient(135deg, var(--sacs-info) 0%, #9058e8 100%);
+}
+
+/* ========================================
+   Animaciones y transiciones
+   ======================================== */
+
+/* Fade in desde abajo */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Scale in */
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Clases de animación */
+.sacs-animate-up {
+    animation: fadeInUp 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    opacity: 0;
+    animation-fill-mode: forwards;
+}
+
+.sacs-animate-scale {
+    animation: scaleIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    opacity: 0;
+    animation-fill-mode: forwards;
+}
+
+/* Delays para animaciones escalonadas */
+.sacs-delay-100 { animation-delay: 0.1s; }
+.sacs-delay-200 { animation-delay: 0.2s; }
+.sacs-delay-300 { animation-delay: 0.3s; }
+.sacs-delay-400 { animation-delay: 0.4s; }
+.sacs-delay-500 { animation-delay: 0.5s; }
+
+/* ========================================
+   Estados de carga y feedback
+   ======================================== */
+
+/* Skeleton loading */
+.sacs-skeleton {
+    background: linear-gradient(90deg, var(--sacs-gray-200) 0%, var(--sacs-gray-100) 50%, var(--sacs-gray-200) 100%);
+    background-size: 200% 100%;
+    animation: skeletonLoading 1.5s infinite;
+    border-radius: 0.5rem;
+}
+
+@keyframes skeletonLoading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ========================================
+   Responsive Design
+   ======================================== */
+
+/* Tablet */
+@media (max-width: 992px) {
+    .sacs-kpi-value {
+        font-size: 2.5rem;
+    }
+    
+    .sacs-card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Móvil */
+@media (max-width: 768px) {
+    .sacs-kpi-card {
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .sacs-kpi-value {
+        font-size: 2rem;
+    }
+}
+
+/* ========================================
+   Utilidades específicas SACS_BD
+   ======================================== */
+
+/* Estados de servidor */
+.status-online {
+    color: var(--sacs-success);
+}
+
+.status-offline {
+    color: var(--sacs-danger);
+}
+
+.status-warning {
+    color: var(--sacs-warning);
+}
+
+/* Badges personalizados */
+.sacs-badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.sacs-badge.success {
+    background: rgba(80, 205, 137, 0.1);
+    color: var(--sacs-success);
+}
+
+.sacs-badge.danger {
+    background: rgba(241, 65, 108, 0.1);
+    color: var(--sacs-danger);
+}
+
+.sacs-badge.warning {
+    background: rgba(255, 199, 0, 0.1);
+    color: var(--sacs-warning);
+}

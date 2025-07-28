@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block breadcrumb %}
+<ul class="breadcrumb breadcrumb-separatorless fw-semibold fs-7 my-0 pt-1">
+    <li class="breadcrumb-item text-muted">
+        <a href="{% url 'reportes:dashboard' %}" class="text-muted text-hover-primary">Inicio</a>
+    </li>
+    <li class="breadcrumb-item">
+        <span class="bullet bg-gray-400 w-5px h-2px"></span>
+    </li>
+    <li class="breadcrumb-item text-muted">
+        <a href="{% url 'user_management:list' %}" class="text-muted text-hover-primary">Usuarios</a>
+    </li>
+    {% block user_breadcrumb %}{% endblock %}
+</ul>
+{% endblock %}
+
+{% block extra_css %}
+<!-- User Management específico CSS -->
+<style>
+/* Estilos específicos para gestión de usuarios */
+.user-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1.2rem;
+}
+
+.user-status-active {
+    color: #50cd89;
+}
+
+.user-status-inactive {
+    color: #f1416c;
+}
+
+.role-badge {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.375rem;
+}
+
+.last-login-badge {
+    background-color: #f8f9fa;
+    color: #5e6278;
+    border: 1px solid #eff2f5;
+}
+
+/* Mejorar la tabla de usuarios */
+.user-table-row:hover {
+    background-color: #f8f9fa;
+    transition: all 0.2s ease;
+}
+
+/* Estadísticas cards */
+.stats-card {
+    border-radius: 1rem;
+    box-shadow: 0 0.5rem 1.5rem 0.5rem rgba(0, 0, 0, 0.075);
+    transition: all 0.3s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+}
+
+/* Botones de acción */
+.action-buttons .btn {
+    margin-right: 0.25rem;
+    margin-bottom: 0.25rem;
+}
+
+/* Filtros */
+.filters-section {
+    background: #f8f9fa;
+    border: 1px solid #e1e3ea;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* Dropdown de acciones */
+.actions-dropdown {
+    min-width: 150px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+    
+    .action-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .stats-card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Dark mode support */
+[data-bs-theme="dark"] .filters-section {
+    background: #1e1e2d;
+    border-color: #2d2d3f;
+}
+
+[data-bs-theme="dark"] .last-login-badge {
+    background-color: #2d2d3f;
+    color: #a1a5b7;
+    border-color: #323248;
+}
+
+[data-bs-theme="dark"] .user-table-row:hover {
+    background-color: #1e1e2d;
+}
+</style>
+{% block user_extra_css %}{% endblock %}
+{% endblock %}
+
+{% block extra_js %}
+<!-- SweetAlert2 para confirmaciones -->
+<script src="{% static 'assets/plugins/custom/sweetalert2/sweetalert2.bundle.js' %}"></script>
+
+<!-- User Management común JavaScript -->
+<script>
+"use strict";
+
+// Configuración global para user management
+window.UserManagementConfig = {
+    deleteUserUrl: "{% url 'user_management:delete' 0 %}",
+    toggleStatusUrl: "{% url 'user_management:toggle_status' 0 %}",
+    resetAttemptsUrl: "{% url 'user_management:reset_attempts' 0 %}",
+    csrfToken: '{{ csrf_token }}',
+    messages: {
+        deleteConfirm: "¿Estás seguro de eliminar este usuario?",
+        deleteSuccess: "Usuario eliminado correctamente",
+        deleteError: "Error al eliminar el usuario",
+        statusToggleConfirm: "¿Deseas cambiar el estado de este usuario?",
+        statusToggleSuccess: "Estado cambiado correctamente",
+        statusToggleError: "Error al cambiar el estado",
+        resetAttemptsConfirm: "¿Deseas resetear los intentos fallidos?",
+        resetAttemptsSuccess: "Intentos reseteados correctamente",
+        resetAttemptsError: "Error al resetear intentos"
+    }
+};
+
+// Utilidades comunes
+const UserManagement = {
+    
+    // Mostrar confirmación con SweetAlert2
+    confirm: function(title, text, confirmText = "Sí, proceder", cancelText = "Cancelar") {
+        return Swal.fire({
+            title: title,
+            text: text,
+            icon: "warning",
+            showCancelButton: true,
+            buttonsStyling: false,
+            confirmButtonText: confirmText,
+            cancelButtonText: cancelText,
+            customClass: {
+                confirmButton: "btn fw-bold btn-danger",
+                cancelButton: "btn fw-bold btn-active-light-primary"
+            }
+        });
+    },
+    
+    // Mostrar notificación de éxito
+    showSuccess: function(message) {
+        Swal.fire({
+            text: message,
+            icon: "success",
+            buttonsStyling: false,
+            confirmButtonText: "Ok, entendido!",
+            customClass: {
+                confirmButton: "btn fw-bold btn-primary",
+            }
+        });
+    },
+    
+    // Mostrar notificación de error
+    showError: function(message) {
+        Swal.fire({
+            text: message,
+            icon: "error",
+            buttonsStyling: false,
+            confirmButtonText: "Ok, entendido!",
+            customClass: {
+                confirmButton: "btn fw-bold btn-primary",
+            }
+        });
+    },
+    
+    // Hacer petición AJAX
+    makeRequest: function(url, method = 'POST', data = {}) {
+        const headers = {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        };
+        
+        const config = {
+            method: method,
+            headers: headers
+        };
+        
+        if (method !== 'GET') {
+            config.body = JSON.stringify(data);
+        }
+        
+        return fetch(url, config);
+    },
+    
+    // Toggle estado de usuario
+    toggleUserStatus: function(userId) {
+        this.confirm(
+            "Cambiar Estado",
+            window.UserManagementConfig.messages.statusToggleConfirm
+        ).then((result) => {
+            if (result.isConfirmed) {
+                const url = window.UserManagementConfig.toggleStatusUrl.replace('0', userId);
+                
+                this.makeRequest(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            this.showSuccess(data.message || window.UserManagementConfig.messages.statusToggleSuccess);
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            this.showError(data.message || window.UserManagementConfig.messages.statusToggleError);
+                        }
+                    })
+                    .catch(error => {
+                        this.showError(window.UserManagementConfig.messages.statusToggleError);
+                    });
+            }
+        });
+    },
+    
+    // Resetear intentos fallidos
+    resetFailedAttempts: function(userId) {
+        this.confirm(
+            "Resetear Intentos",
+            window.UserManagementConfig.messages.resetAttemptsConfirm
+        ).then((result) => {
+            if (result.isConfirmed) {
+                const url = window.UserManagementConfig.resetAttemptsUrl.replace('0', userId);
+                
+                this.makeRequest(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            this.showSuccess(data.message || window.UserManagementConfig.messages.resetAttemptsSuccess);
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            this.showError(data.message || window.UserManagementConfig.messages.resetAttemptsError);
+                        }
+                    })
+                    .catch(error => {
+                        this.showError(window.UserManagementConfig.messages.resetAttemptsError);
+                    });
+            }
+        });
+    },
+    
+    // Formatear fecha
+    formatDate: function(dateString) {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    },
+    
+    // Inicializar tooltips
+    initTooltips: function() {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
+};
+
+// Funciones globales para mantener compatibilidad
+function toggleUserStatus(userId) {
+    UserManagement.toggleUserStatus(userId);
+}
+
+function resetFailedAttempts(userId) {
+    UserManagement.resetFailedAttempts(userId);
+}
+
+// Inicializar cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    UserManagement.initTooltips();
+});
+</script>
+
+{% block user_extra_js %}{% endblock %}
+{% endblock %}

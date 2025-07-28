@@ -1,0 +1,546 @@
+{% extends "reportes/reports_base.html" %}
+{% load static %}
+
+{% block title %}{{ user_detail.username }} - Detalle Usuario - SACSBD{% endblock %}
+{% block page_title %}Detalle Usuario{% endblock %}
+
+{% block report_title %}{{ user_detail.get_full_name|default:user_detail.username }}{% endblock %}
+{% block report_subtitle %}Información detallada del usuario y sus permisos{% endblock %}
+
+{% block report_actions %}
+<div class="export-buttons">
+    <a href="{% url 'user_management:edit' user_detail.pk %}" class="btn btn-sm btn-warning">
+        <i class="ki-duotone ki-pencil fs-3">
+            <span class="path1"></span>
+            <span class="path2"></span>
+        </i>
+        Editar Usuario
+    </a>
+    <a href="{% url 'user_management:change_password' user_detail.pk %}" class="btn btn-sm btn-info">
+        <i class="ki-duotone ki-lock fs-3">
+            <span class="path1"></span>
+            <span class="path2"></span>
+        </i>
+        Cambiar Contraseña
+    </a>
+    <a href="{% url 'user_management:list' %}" class="btn btn-sm btn-secondary">
+        <i class="ki-duotone ki-arrow-left fs-3">
+            <span class="path1"></span>
+            <span class="path2"></span>
+        </i>
+        Volver a la Lista
+    </a>
+    <button type="button" class="btn btn-sm btn-light" onclick="location.reload()">
+        <i class="ki-duotone ki-arrows-circle fs-3">
+            <span class="path1"></span>
+            <span class="path2"></span>
+        </i>
+        Actualizar
+    </button>
+</div>
+{% endblock %}
+
+{% block report_filters %}
+<!-- No necesitamos filtros en esta página -->
+{% endblock %}
+
+{% block report_content %}
+
+<!-- Estadísticas del usuario -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Total Logins</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ user_stats.total_logins }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-sign-in-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Intentos Fallidos</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ user_stats.failed_attempts }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Roles Asignados</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ user_stats.roles_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-user-shield fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card {% if user_stats.is_blocked %}border-left-danger{% else %}border-left-primary{% endif %} shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold {% if user_stats.is_blocked %}text-danger{% else %}text-primary{% endif %} text-uppercase mb-1">Estado</div>
+                        <div class="h6 mb-0 font-weight-bold text-gray-800">
+                            {% if user_stats.is_blocked %}
+                                <span class="text-danger">Bloqueado</span>
+                            {% elif user_detail.is_active %}
+                                <span class="text-success">Activo</span>
+                            {% else %}
+                                <span class="text-secondary">Inactivo</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        {% if user_stats.is_blocked %}
+                            <i class="fas fa-lock fa-2x text-gray-300"></i>
+                        {% elif user_detail.is_active %}
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        {% else %}
+                            <i class="fas fa-times-circle fa-2x text-gray-300"></i>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Información del usuario -->
+    <div class="col-md-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-user me-2"></i>Información Personal
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Nombre de Usuario</label>
+                            <div class="fw-bold">
+                                <i class="fas fa-at text-primary me-2"></i>{{ user_detail.username }}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Nombre Completo</label>
+                            <div class="fw-bold">
+                                <i class="fas fa-user text-primary me-2"></i>{{ user_detail.get_full_name|default:"No especificado" }}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Email</label>
+                            <div class="fw-bold">
+                                {% if user_detail.email %}
+                                    <i class="fas fa-envelope text-primary me-2"></i>
+                                    <a href="mailto:{{ user_detail.email }}">{{ user_detail.email }}</a>
+                                {% else %}
+                                    <span class="text-muted">No especificado</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Teléfono</label>
+                            <div class="fw-bold">
+                                {% if user_detail.profile.telefono %}
+                                    <i class="fas fa-phone text-primary me-2"></i>{{ user_detail.profile.telefono }}
+                                {% else %}
+                                    <span class="text-muted">No especificado</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Cargo</label>
+                            <div class="fw-bold">
+                                {% if user_detail.profile.cargo %}
+                                    <i class="fas fa-id-badge text-primary me-2"></i>{{ user_detail.profile.cargo }}
+                                {% else %}
+                                    <span class="text-muted">No especificado</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Departamento</label>
+                            <div class="fw-bold">
+                                {% if user_detail.profile.departamento %}
+                                    <i class="fas fa-building text-primary me-2"></i>{{ user_detail.profile.departamento }}
+                                {% else %}
+                                    <span class="text-muted">No especificado</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Fecha de Registro</label>
+                            <div class="fw-bold">
+                                <i class="fas fa-calendar text-primary me-2"></i>{{ user_detail.date_joined|date:"d/m/Y H:i" }}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Último Login</label>
+                            <div class="fw-bold">
+                                {% if user_detail.last_login %}
+                                    <i class="fas fa-clock text-primary me-2"></i>{{ user_detail.last_login|date:"d/m/Y H:i" }}
+                                    <br><small class="text-muted">{{ user_detail.last_login|timesince }} atrás</small>
+                                {% else %}
+                                    <span class="text-muted">Nunca</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Roles y permisos -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-user-shield me-2"></i>Roles y Permisos
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if user_roles %}
+                    <div class="row">
+                        {% for user_role in user_roles %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-left-success">
+                                <div class="card-body py-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ user_role.role.name }}</h6>
+                                            <small class="text-muted">{{ user_role.role.description|default:"Sin descripción" }}</small>
+                                        </div>
+                                        {% if user_role.role.es_administrador %}
+                                            <span class="badge bg-danger">Admin</span>
+                                        {% else %}
+                                            <span class="badge bg-primary">Usuario</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="mt-2">
+                                        <small class="text-muted">
+                                            Asignado: {{ user_role.fecha_asignacion|date:"d/m/Y" }}
+                                            {% if user_role.asignado_por %}
+                                                por {{ user_role.asignado_por.username }}
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                    
+                                    <!-- Permisos del rol -->
+                                    <div class="mt-2">
+                                        {% if user_role.role.puede_ver_reportes %}
+                                            <span class="badge bg-info me-1">Ver Reportes</span>
+                                        {% endif %}
+                                        {% if user_role.role.puede_gestionar_usuarios %}
+                                            <span class="badge bg-warning me-1">Gestionar Usuarios</span>
+                                        {% endif %}
+                                        {% if user_role.role.puede_gestionar_backups %}
+                                            <span class="badge bg-success me-1">Gestionar Backups</span>
+                                        {% endif %}
+                                        {% if user_role.role.puede_monitorear_servidores %}
+                                            <span class="badge bg-secondary me-1">Monitorear Servidores</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Este usuario no tiene roles asignados
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Panel lateral con acciones y configuraciones -->
+    <div class="col-md-4">
+        <!-- Estado y acciones -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-cogs me-2"></i>Estado y Acciones
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label text-muted">Estado del Usuario</label>
+                    <div>
+                        {% if user_detail.is_active %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-check-circle me-1"></i>Activo
+                            </span>
+                        {% else %}
+                            <span class="badge bg-danger">
+                                <i class="fas fa-times-circle me-1"></i>Inactivo
+                            </span>
+                        {% endif %}
+                        
+                        {% if user_detail.is_staff %}
+                            <span class="badge bg-info ms-1">
+                                <i class="fas fa-cog me-1"></i>Staff
+                            </span>
+                        {% endif %}
+                        
+                        {% if user_detail.is_superuser %}
+                            <span class="badge bg-warning ms-1">
+                                <i class="fas fa-crown me-1"></i>Superusuario
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if user_stats.is_blocked %}
+                <div class="mb-3">
+                    <div class="alert alert-danger">
+                        <i class="fas fa-lock me-2"></i>
+                        <strong>Usuario Bloqueado</strong><br>
+                        <small>Demasiados intentos fallidos</small>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-success" onclick="resetFailedAttempts({{ user_detail.pk }})">
+                        <i class="fas fa-unlock me-1"></i>Desbloquear Usuario
+                    </button>
+                </div>
+                {% endif %}
+                
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-outline-primary" onclick="toggleUserStatus({{ user_detail.pk }})">
+                        {% if user_detail.is_active %}
+                            <i class="fas fa-user-slash me-1"></i>Desactivar Usuario
+                        {% else %}
+                            <i class="fas fa-user-check me-1"></i>Activar Usuario
+                        {% endif %}
+                    </button>
+                    
+                    {% if user_stats.failed_attempts > 0 %}
+                    <button type="button" class="btn btn-outline-success" onclick="resetFailedAttempts({{ user_detail.pk }})">
+                        <i class="fas fa-undo me-1"></i>Resetear Intentos ({{ user_stats.failed_attempts }})
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Configuraciones de seguridad -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-shield-alt me-2"></i>Configuraciones de Seguridad
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label text-muted">Tema Preferido</label>
+                    <div class="fw-bold">
+                        <i class="fas fa-palette text-primary me-2"></i>{{ user_detail.profile.get_tema_preferido_display }}
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label text-muted">Último Cambio de Contraseña</label>
+                    <div class="fw-bold">
+                        {% if user_detail.profile.ultimo_cambio_password %}
+                            <i class="fas fa-key text-primary me-2"></i>{{ user_detail.profile.ultimo_cambio_password|date:"d/m/Y" }}
+                        {% else %}
+                            <span class="text-muted">Nunca</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if user_detail.profile.cambio_password_requerido %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Se requiere cambio de contraseña
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actividad reciente -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-history me-2"></i>Actividad Reciente
+        </h6>
+    </div>
+    <div class="card-body">
+        {% if recent_logs %}
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr class="text-center">
+                        <th>Acción</th>
+                        <th>Descripción</th>
+                        <th>IP</th>
+                        <th>Fecha</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in recent_logs %}
+                    <tr style="font-size: smaller;">
+                        <td class="text-center">
+                            <span class="badge bg-info">{{ log.get_action_display }}</span>
+                        </td>
+                        <td>{{ log.description }}</td>
+                        <td class="text-center">
+                            {% if log.ip_address %}
+                                <small class="text-muted">{{ log.ip_address }}</small>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {{ log.timestamp|date:"d/m/Y H:i:s" }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            No hay actividad reciente registrada
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block reports_extra_css %}
+<style>
+.border-left-primary {
+    border-left: 0.25rem solid #4e73df !important;
+}
+
+.border-left-success {
+    border-left: 0.25rem solid #1cc88a !important;
+}
+
+.border-left-info {
+    border-left: 0.25rem solid #36b9cc !important;
+}
+
+.border-left-warning {
+    border-left: 0.25rem solid #f6c23e !important;
+}
+
+.border-left-danger {
+    border-left: 0.25rem solid #e74c3c !important;
+}
+
+.text-gray-800 {
+    color: #5a5c69 !important;
+}
+
+.text-gray-300 {
+    color: #dddfeb !important;
+}
+</style>
+{% endblock %}
+
+{% block reports_extra_js %}
+<script>
+// Función para cambiar estado de usuario
+function toggleUserStatus(userId) {
+    if (confirm('¿Estás seguro de cambiar el estado de este usuario?')) {
+        fetch(`{% url 'user_management:toggle_status' 0 %}`.replace('0', userId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(data.message, 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showNotification(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            showNotification('Error al cambiar estado del usuario', 'error');
+        });
+    }
+}
+
+// Función para resetear intentos fallidos
+function resetFailedAttempts(userId) {
+    if (confirm('¿Deseas resetear los intentos fallidos de este usuario?')) {
+        fetch(`{% url 'user_management:reset_attempts' 0 %}`.replace('0', userId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(data.message, 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showNotification(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            showNotification('Error al resetear intentos fallidos', 'error');
+        });
+    }
+}
+
+// Función para mostrar notificaciones
+function showNotification(message, type = 'success') {
+    alert(message);
+}
+
+// Agregar token CSRF para las peticiones AJAX
+document.addEventListener('DOMContentLoaded', function() {
+    // Crear input hidden con token CSRF si no existe
+    if (!document.querySelector('[name=csrfmiddlewaretoken]')) {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') || 
+                         document.createElement('input');
+        csrfToken.type = 'hidden';
+        csrfToken.name = 'csrfmiddlewaretoken';
+        csrfToken.value = '{{ csrf_token }}';
+        document.body.appendChild(csrfToken);
+    }
+});
+</script>
+{% endblock %}

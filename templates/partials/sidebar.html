@@ -1,0 +1,263 @@
+{% load static %}
+<!-- Sidebar -->
+<div id="kt_app_sidebar" class="app-sidebar flex-column" data-kt-drawer="true" data-kt-drawer-name="app-sidebar" data-kt-drawer-activate="{default: true, lg: false}" data-kt-drawer-overlay="true" data-kt-drawer-width="225px" data-kt-drawer-direction="start" data-kt-drawer-toggle="#kt_app_sidebar_mobile_toggle">
+    
+    <!-- Logo -->
+    <div class="app-sidebar-logo px-6" id="kt_app_sidebar_logo">
+        <a href="{% url 'home' %}">
+            <img alt="Logo" src="{% static 'demo1/assets/media/logos/default-dark.svg' %}" class="h-25px app-sidebar-logo-default"/>
+            <img alt="Logo" src="{% static 'demo1/assets/media/logos/default-small.svg' %}" class="h-20px app-sidebar-logo-minimize"/>
+        </a>
+        
+        <div id="kt_app_sidebar_toggle" class="app-sidebar-toggle btn btn-icon btn-shadow btn-sm btn-color-muted btn-active-color-primary h-30px w-30px position-absolute top-50 start-100 translate-middle rotate" data-kt-toggle="true" data-kt-toggle-state="active" data-kt-toggle-target="body" data-kt-toggle-name="app-sidebar-minimize">
+            <i class="ki-outline ki-black-left-line fs-3 rotate-180"></i>
+        </div>
+    </div>
+    
+    <!-- Menu wrapper -->
+    <div class="app-sidebar-menu overflow-hidden flex-column-fluid">
+        <div id="kt_app_sidebar_menu_wrapper" class="app-sidebar-wrapper">
+            <div id="kt_app_sidebar_menu_scroll" class="scroll-y my-5 mx-3" data-kt-scroll="true" data-kt-scroll-activate="true" data-kt-scroll-height="auto" data-kt-scroll-dependencies="#kt_app_sidebar_logo, #kt_app_sidebar_footer" data-kt-scroll-wrappers="#kt_app_sidebar_menu" data-kt-scroll-offset="5px" data-kt-scroll-save-state="true">
+                
+                <!-- Menu -->
+                <div class="menu menu-column menu-rounded menu-sub-indention fw-semibold fs-6" id="#kt_app_sidebar_menu" data-kt-menu="true" data-kt-menu-expand="false">
+                    
+                    <!-- Dashboard -->
+                    <div class="menu-item">
+                        <a class="menu-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">
+                            <span class="menu-icon">
+                                <i class="ki-outline ki-element-11 fs-2"></i>
+                            </span>
+                            <span class="menu-title">Dashboard</span>
+                        </a>
+                    </div>
+                    
+                    <!-- Separator -->
+                    <div class="menu-item">
+                        <div class="menu-content pt-8 pb-2">
+                            <span class="menu-section text-muted text-uppercase fs-8 ls-1">Administración</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Usuarios -->
+                    <div class="menu-item">
+                        <a class="menu-link" href="#">
+                            <span class="menu-icon">
+                                <i class="ki-outline ki-people fs-2"></i>
+                            </span>
+                            <span class="menu-title">Usuarios</span>
+                        </a>
+                    </div>
+                    
+                    <!-- Roles y Permisos -->
+                    <div class="menu-item">
+                        <a class="menu-link" href="#">
+                            <span class="menu-icon">
+                                <i class="ki-outline ki-security-user fs-2"></i>
+                            </span>
+                            <span class="menu-title">Roles y Permisos</span>
+                        </a>
+                    </div>
+                    
+                    <!-- Separator -->
+                    <div class="menu-item">
+                        <div class="menu-content pt-8 pb-2">
+                            <span class="menu-section text-muted text-uppercase fs-8 ls-1">Monitoreo</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Backups -->
+                    <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
+                        <span class="menu-link">
+                            <span class="menu-icon">
+                                <i class="ki-outline ki-database fs-2"></i>
+                            </span>
+                            <span class="menu-title">Backups</span>
+                            <span class="menu-arrow"></span>
+                        </span>
+                        <div class="menu-sub menu-sub-accordion">
+                            <div class="menu-item">
+                                <a class="menu-link" href="#">
+                                    <span class="menu-bullet">
+                                        <span class="bullet bullet-dot"></span>
+                                    </span>
+                                    <span class="menu-title">Estado General</span>
+                                </a>
+                            </div>
+                            <div class="menu-item">
+                                <a class="menu-link" href="#">
+                                    <span class="menu-bullet">
+                                        <span class="bullet bullet-dot"></span>
+                                    </span>
+                                    <span class="menu-title">Programaciones</span>
+                                </a>
+                            </div>
+                            <div class="menu-item">
+                                <a class="menu-link" href="#">
+                                    <span class="menu-bullet">
+                                        <span class="bullet bullet-dot"></span>
+                                    </span>
+                                    <span class="menu-title">Histórico</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Servidores -->
+                    <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
+                        <span class="menu-link">
+                            <span class="menu-icon">
+                                <i class="ki-outline ki-technology-4 fs-2"></i>
+                            </span>
+                            <span class="menu-title">Servidores</span>
+                            <span class="menu-arrow"></span>
+                        </span>
+                        <div class="menu-sub menu-sub-accordion">
+                            <div class="menu-item">
+                                <a class="menu-link" href="#">
+                                    <span class="menu-bullet">
+                                        <span class="bullet bullet-dot"></span>
+                                    </span>
+                                    <span class="menu-title">Estado SQL Server</span>
+                                </a>
+                            </div>
+                            <div class="menu-item">
+                                <a class="menu-link" href="#">
+                                    <span class="menu-bullet">
+                                        <span class="bullet bullet-dot"></span>
+                                    </span>
+                                    <span class="menu-title">Bases de Datos</span>
+                                </a>
+                            </div>
+                            <div class="menu-item">
+                                <a class="menu-link" href="#">
+                                    <span class="menu-bullet">
+                                        <span class="bullet bullet-dot"></span>
+                                    </span>
+                                    <span class="menu-title">Jobs</span>
+                                </a>
+                            </div>
+                            <div class="menu-item">
+                                <a class="menu-link {% if request.resolver_match.url_name == 'disk_growth' %}active{% endif %}" href="{% url 'reportes:disk_growth' %}">
+                                    <span class="menu-bullet">
+                                        <span class="bullet bullet-dot"></span>
+                                    </span>
+                                    <span class="menu-title">Espacio en Disco</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Alertas -->
+                    <div class="menu-item">
+                        <a class="menu-link" href="#">
+                            <span class="menu-icon">
+                                <i class="ki-outline ki-notification fs-2"></i>
+                            </span>
+                            <span class="menu-title">Alertas</span>
+                            <span class="menu-badge">
+                                <span class="badge badge-light-danger badge-circle fw-bold fs-7">3</span>
+                            </span>
+                        </a>
+                    </div>
+                    
+                    <!-- Separator -->
+                    <div class="menu-item">
+                        <div class="menu-content pt-8 pb-2">
+                            <span class="menu-section text-muted text-uppercase fs-8 ls-1">Reportes</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Reportes -->
+                    <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
+                        <span class="menu-link">
+                            <span class="menu-icon">
+                                <i class="ki-outline ki-chart-simple fs-2"></i>
+                            </span>
+                            <span class="menu-title">Reportes</span>
+                            <span class="menu-arrow"></span>
+                        </span>
+                        <div class="menu-sub menu-sub-accordion">
+                            <div class="menu-item">
+                                <a class="menu-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'reportes:dashboard' %}">
+                                    <span class="menu-bullet">
+                                        <span class="bullet bullet-dot"></span>
+                                    </span>
+                                    <span class="menu-title">Dashboard</span>
+                                </a>
+                            </div>
+                            <div class="menu-item">
+                                <a class="menu-link {% if request.resolver_match.url_name == 'cumplimiento_backup' %}active{% endif %}" href="{% url 'reportes:cumplimiento_backup' %}">
+                                    <span class="menu-bullet">
+                                        <span class="bullet bullet-dot"></span>
+                                    </span>
+                                    <span class="menu-title">Cumplimiento Backup</span>
+                                </a>
+                            </div>
+                            <div class="menu-item">
+                                <a class="menu-link {% if request.resolver_match.url_name == 'jobs_backup' %}active{% endif %}" href="{% url 'reportes:jobs_backup' %}">
+                                    <span class="menu-bullet">
+                                        <span class="bullet bullet-dot"></span>
+                                    </span>
+                                    <span class="menu-title">Jobs de Backup</span>
+                                </a>
+                            </div>
+                            <div class="menu-item">
+                                <a class="menu-link {% if request.resolver_match.url_name == 'estados_db' %}active{% endif %}" href="{% url 'reportes:estados_db' %}">
+                                    <span class="menu-bullet">
+                                        <span class="bullet bullet-dot"></span>
+                                    </span>
+                                    <span class="menu-title">Estados de BD</span>
+                                </a>
+                            </div>
+                            <div class="menu-item">
+                                <a class="menu-link {% if request.resolver_match.url_name == 'disk_growth' %}active{% endif %}" href="{% url 'reportes:disk_growth' %}">
+                                    <span class="menu-bullet">
+                                        <span class="bullet bullet-dot"></span>
+                                    </span>
+                                    <span class="menu-title">Crecimiento de Discos</span>
+                                </a>
+                            </div>
+                            <div class="menu-item">
+                                <a class="menu-link {% if request.resolver_match.url_name == 'ultimos_backup' %}active{% endif %}" href="{% url 'reportes:ultimos_backup' %}">
+                                    <span class="menu-bullet">
+                                        <span class="bullet bullet-dot"></span>
+                                    </span>
+                                    <span class="menu-title">Últimos Backups</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Auditoría -->
+                    <div class="menu-item">
+                        <a class="menu-link" href="#">
+                            <span class="menu-icon">
+                                <i class="ki-outline ki-shield-search fs-2"></i>
+                            </span>
+                            <span class="menu-title">Auditoría</span>
+                        </a>
+                    </div>
+                    
+                    <!-- Separator -->
+                    <div class="menu-item">
+                        <div class="menu-content pt-8 pb-2">
+                            <span class="menu-section text-muted text-uppercase fs-8 ls-1">Sistema</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Configuración -->
+                    <div class="menu-item">
+                        <a class="menu-link" href="#">
+                            <span class="menu-icon">
+                                <i class="ki-outline ki-gear fs-2"></i>
+                            </span>
+                            <span class="menu-title">Configuración</span>
+                        </a>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

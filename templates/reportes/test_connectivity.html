@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Prueba de Conectividad - SACSBD{% endblock %}
+{% block page_title %}Prueba de Conectividad SACSBD{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="ki-duotone ki-pulse fs-2 text-primary me-2">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                    </i>
+                    Diagnóstico del Sistema SACSBD
+                </h3>
+            </div>
+            
+            <div class="card-body">
+                <!-- Prueba de Conexión -->
+                <div class="mb-8">
+                    <h4 class="text-dark mb-4">
+                        <i class="ki-duotone ki-connect fs-2 me-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                        </i>
+                        Conexión a Base de Datos
+                    </h4>
+                    
+                    <div class="alert alert-{% if results.connection_test %}success{% else %}danger{% endif %} d-flex align-items-center">
+                        <i class="ki-duotone ki-{% if results.connection_test %}check-circle{% else %}cross-circle{% endif %} fs-2hx me-4">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                        <div>
+                            <h5 class="mb-1">
+                                {% if results.connection_test %}
+                                    ✅ Conexión Exitosa
+                                {% else %}
+                                    ❌ Error de Conexión
+                                {% endif %}
+                            </h5>
+                            <span>
+                                {% if results.connection_test %}
+                                    La conexión a la base de datos SQL Server está funcionando correctamente.
+                                {% else %}
+                                    No se pudo establecer conexión con la base de datos.
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Prueba de Tablas -->
+                <div class="mb-8">
+                    <h4 class="text-dark mb-4">
+                        <i class="ki-duotone ki-tablet fs-2 me-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                        Acceso a Tablas Principales
+                    </h4>
+                    
+                    <div class="row g-5">
+                        {% for table_name, table_info in results.tables_test.items %}
+                            <div class="col-md-6">
+                                <div class="card border border-{% if table_info.accessible %}success{% else %}danger{% endif %}">
+                                    <div class="card-body text-center">
+                                        <i class="ki-duotone ki-{% if table_info.accessible %}check-circle{% else %}cross-circle{% endif %} fs-3tx text-{% if table_info.accessible %}success{% else %}danger{% endif %} mb-3">
+                                            <span class="path1"></span>
+                                            <span class="path2"></span>
+                                        </i>
+                                        <h5 class="text-dark mb-2">{{ table_name }}</h5>
+                                        {% if table_info.accessible %}
+                                            <div class="text-success fw-bold fs-6">✅ Accesible</div>
+                                            <div class="text-muted fs-7">{{ table_info.record_count|default:0 }} registros</div>
+                                        {% else %}
+                                            <div class="text-danger fw-bold fs-6">❌ No accesible</div>
+                                            <div class="text-muted fs-8">{{ table_info.error|default:"Error desconocido" }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Prueba de Consultas -->
+                <div class="mb-8">
+                    <h4 class="text-dark mb-4">
+                        <i class="ki-duotone ki-code fs-2 me-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                        </i>
+                        Consultas Básicas
+                    </h4>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-row-bordered table-row-gray-100 align-middle gs-0 gy-3">
+                            <thead>
+                                <tr class="fw-bold text-muted">
+                                    <th>Consulta</th>
+                                    <th>Estado</th>
+                                    <th>Registros</th>
+                                    <th>Detalles</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for query_name, query_info in results.basic_queries.items %}
+                                    <tr>
+                                        <td>
+                                            <span class="text-dark fw-semibold">{{ query_name|title }}</span>
+                                        </td>
+                                        <td>
+                                            {% if query_info.success %}
+                                                <span class="badge badge-success">✅ Exitosa</span>
+                                            {% else %}
+                                                <span class="badge badge-danger">❌ Error</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if query_info.success %}
+                                                <span class="text-primary fw-bold">{{ query_info.record_count }}</span>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if not query_info.success %}
+                                                <small class="text-danger">{{ query_info.error|default:"Error desconocido" }}</small>
+                                            {% else %}
+                                                <small class="text-success">OK</small>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Errores Encontrados -->
+                {% if results.errors %}
+                    <div class="mb-8">
+                        <h4 class="text-danger mb-4">
+                            <i class="ki-duotone ki-information fs-2 me-2">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                                <span class="path3"></span>
+                            </i>
+                            Errores Encontrados ({{ results.errors|length }})
+                        </h4>
+                        
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                {% for error in results.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                <!-- Acciones -->
+                <div class="text-center">
+                    <button onclick="window.location.reload()" class="btn btn-primary me-3">
+                        <i class="ki-duotone ki-arrows-circle fs-4 me-1">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                        Ejecutar Prueba Nuevamente
+                    </button>
+                    
+                    <a href="{% url 'reportes:dashboard' %}" class="btn btn-success">
+                        <i class="ki-duotone ki-home fs-4 me-1">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                        </i>
+                        Ir al Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recomendaciones -->
+<div class="row mt-8">
+    <div class="col-12">
+        <div class="card bg-light-info">
+            <div class="card-body">
+                <h5 class="text-info mb-3">
+                    <i class="ki-duotone ki-information-5 fs-2 me-2">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                        <span class="path3"></span>
+                    </i>
+                    Recomendaciones
+                </h5>
+                
+                <div class="text-gray-700">
+                    {% if not results.connection_test %}
+                        <p><strong>❌ Conexión fallida:</strong> Verificar configuración de base de datos en settings.py</p>
+                    {% endif %}
+                    
+                    {% if results.errors %}
+                        <p><strong>⚠️ Errores encontrados:</strong> Revisar permisos de usuario en SQL Server</p>
+                    {% endif %}
+                    
+                    {% if results.connection_test and not results.errors %}
+                        <p><strong>✅ Sistema operativo:</strong> Todas las pruebas básicas pasaron exitosamente</p>
+                    {% endif %}
+                    
+                    <p><strong>📋 Siguientes pasos:</strong></p>
+                    <ul>
+                        <li>Si hay errores de conexión, verificar cadena de conexión</li>
+                        <li>Si las tablas no son accesibles, verificar permisos</li>
+                        <li>Si las consultas fallan, revisar versión de SQL Server</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

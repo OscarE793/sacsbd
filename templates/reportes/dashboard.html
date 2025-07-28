@@ -1,0 +1,487 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard SACSBD - Sistema de Monitoreo{% endblock %}
+{% block page_title %}Dashboard SACSBD{% endblock %}
+
+{% block extra_css %}
+<style>
+.metric-card {
+    transition: all 0.3s ease;
+}
+.metric-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+.status-success { background-color: #50cd89; }
+.status-warning { background-color: #ffc700; }
+.status-danger { background-color: #f1416c; }
+.backup-item {
+    border-left: 4px solid transparent;
+    padding-left: 12px;
+    margin-bottom: 8px;
+}
+.backup-item.success { border-left-color: #50cd89; }
+.backup-item.warning { border-left-color: #ffc700; }
+.backup-item.danger { border-left-color: #f1416c; }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if error %}
+    <div class="alert alert-danger d-flex align-items-center p-5 mb-10">
+        <i class="ki-duotone ki-shield-cross fs-2hx text-danger me-4">
+            <span class="path1"></span>
+            <span class="path2"></span>
+        </i>
+        <div class="d-flex flex-column">
+            <h4 class="mb-1 text-danger">Error en el Dashboard</h4>
+            <span>{{ error }}</span>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Métricas principales -->
+<div class="row g-5 g-xl-10 mb-5 mb-xl-10">
+    <!-- Total Servidores -->
+    <div class="col-md-6 col-lg-6 col-xl-6 col-xxl-3 mb-md-5 mb-xl-10">
+        <div class="card metric-card h-md-50 mb-5 mb-xl-10">
+            <div class="card-body d-flex flex-column flex-center">
+                <div class="mb-2">
+                    <i class="ki-duotone ki-technology-4 fs-5tx text-primary">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                    </i>
+                </div>
+                <div class="fs-2hx fw-bold text-dark mb-2 mt-5">
+                    {{ chart_data.servidores|default:0 }}
+                </div>
+                <div class="fs-7 fw-semibold text-gray-400 text-center">Servidores Monitoreados</div>
+                <div class="fs-8 text-muted mt-1">Total en SACSBD</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Total Bases de Datos -->
+    <div class="col-md-6 col-lg-6 col-xl-6 col-xxl-3 mb-md-5 mb-xl-10">
+        <div class="card metric-card h-md-50 mb-5 mb-xl-10">
+            <div class="card-body d-flex flex-column flex-center">
+                <div class="mb-2">
+                    <i class="ki-duotone ki-data fs-5tx text-success">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                        <span class="path3"></span>
+                    </i>
+                </div>
+                <div class="fs-2hx fw-bold text-dark mb-2 mt-5">
+                    {{ chart_data.bases_datos|default:0 }}
+                </div>
+                <div class="fs-7 fw-semibold text-gray-400 text-center">Bases de Datos</div>
+                <div class="fs-8 text-muted mt-1">Con backups registrados</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Backups Hoy -->
+    <div class="col-md-6 col-lg-6 col-xl-6 col-xxl-3 mb-md-5 mb-xl-10">
+        <div class="card metric-card h-md-50 mb-5 mb-xl-10">
+            <div class="card-body d-flex flex-column flex-center">
+                <div class="mb-2">
+                    <i class="ki-duotone ki-shield-tick fs-5tx text-info">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                    </i>
+                </div>
+                <div class="fs-2hx fw-bold text-dark mb-2 mt-5">
+                    {{ chart_data.backups_hoy|default:0 }}
+                </div>
+                <div class="fs-7 fw-semibold text-gray-400 text-center">Backups Hoy</div>
+                <div class="fs-8 text-muted mt-1">{{ "now"|date:"d/m/Y" }}</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Backups Semana -->
+    <div class="col-md-6 col-lg-6 col-xl-6 col-xxl-3 mb-md-5 mb-xl-10">
+        <div class="card metric-card h-md-50 mb-5 mb-xl-10">
+            <div class="card-body d-flex flex-column flex-center">
+                <div class="mb-2">
+                    <i class="ki-duotone ki-chart-line-up fs-5tx text-warning">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                    </i>
+                </div>
+                <div class="fs-2hx fw-bold text-dark mb-2 mt-5">
+                    {{ chart_data.backups_semana|default:0 }}
+                </div>
+                <div class="fs-7 fw-semibold text-gray-400 text-center">Backups esta Semana</div>
+                <div class="fs-8 text-muted mt-1">Últimos 7 días</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estadísticas de Jobs y Últimos Backups -->
+<div class="row g-5 g-xl-10 mb-5 mb-xl-10">
+    <!-- Estadísticas de Jobs -->
+    <div class="col-xl-6">
+        <div class="card card-xl-stretch mb-xl-8">
+            <div class="card-header border-0 pt-5">
+                <h3 class="card-title align-items-start flex-column">
+                    <span class="card-label fw-bold fs-3 mb-1">Estado de Jobs de Backup</span>
+                    <span class="text-muted fw-semibold fs-7">Resultados de la última semana</span>
+                </h3>
+                <div class="card-toolbar">
+                    <a href="{% url 'reportes:jobs_backup' %}" class="btn btn-sm btn-light-primary">
+                        <i class="ki-duotone ki-eye fs-4 me-1">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                        </i>
+                        Ver Detalle
+                    </a>
+                </div>
+            </div>
+            
+            <div class="card-body pt-5">
+                {% if stats_jobs %}
+                    {% for stat in stats_jobs %}
+                        <div class="d-flex align-items-center mb-7">
+                            <div class="symbol symbol-50px me-5">
+                                <span class="symbol-label bg-light-{% if 'Exitoso' in stat.RESULTADO or 'exitoso' in stat.RESULTADO %}success{% elif 'Fallido' in stat.RESULTADO or 'fallido' in stat.RESULTADO or 'Error' in stat.RESULTADO %}danger{% else %}warning{% endif %}">
+                                    <i class="ki-duotone ki-{% if 'Exitoso' in stat.RESULTADO or 'exitoso' in stat.RESULTADO %}check-circle{% elif 'Fallido' in stat.RESULTADO or 'fallido' in stat.RESULTADO or 'Error' in stat.RESULTADO %}cross-circle{% else %}information{% endif %} fs-2x text-{% if 'Exitoso' in stat.RESULTADO or 'exitoso' in stat.RESULTADO %}success{% elif 'Fallido' in stat.RESULTADO or 'fallido' in stat.RESULTADO or 'Error' in stat.RESULTADO %}danger{% else %}warning{% endif %}">
+                                        <span class="path1"></span>
+                                        <span class="path2"></span>
+                                    </i>
+                                </span>
+                            </div>
+                            
+                            <div class="flex-grow-1">
+                                <div class="text-dark fw-bold text-hover-primary fs-6">{{ stat.RESULTADO }}</div>
+                                <span class="text-muted fw-semibold d-block fs-7">
+                                    {% if stat.porcentaje %}{{ stat.porcentaje }}% del total{% else %}Estado de jobs{% endif %}
+                                </span>
+                            </div>
+                            
+                            <span class="text-dark fw-bold fs-4">{{ stat.cantidad }}</span>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-10">
+                        <i class="ki-duotone ki-information-2 fs-5tx text-muted mb-5">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                        </i>
+                        <div class="fs-6 fw-semibold text-gray-400">No hay datos de jobs disponibles</div>
+                        <div class="fs-7 text-muted mt-2">Los jobs aparecerán aquí cuando se ejecuten</div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Últimos Backups -->
+    <div class="col-xl-6">
+        <div class="card card-xl-stretch mb-xl-8">
+            <div class="card-header border-0 pt-5">
+                <h3 class="card-title align-items-start flex-column">
+                    <span class="card-label fw-bold fs-3 mb-1">Últimos Backups</span>
+                    <span class="text-muted fw-semibold fs-7">Estado por servidor y base de datos</span>
+                </h3>
+                <div class="card-toolbar">
+                    <a href="{% url 'reportes:ultimos_backup' %}" class="btn btn-sm btn-light-info">
+                        <i class="ki-duotone ki-time fs-4 me-1">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                        Ver Todos
+                    </a>
+                </div>
+            </div>
+            
+            <div class="card-body pt-5" style="max-height: 400px; overflow-y: auto;">
+                {% if ultimos_backups %}
+                    {% for backup in ultimos_backups %}
+                        <div class="backup-item {{ backup.status_class }} mb-4">
+                            <div class="d-flex align-items-center">
+                                <div class="symbol symbol-35px me-3">
+                                    <span class="symbol-label bg-light-{{ backup.status_class }}">
+                                        <span class="status-indicator status-{{ backup.status_class }}"></span>
+                                    </span>
+                                </div>
+                                
+                                <div class="flex-grow-1">
+                                    <div class="text-dark fw-bold fs-7">{{ backup.DatabaseName }}</div>
+                                    <div class="text-muted fw-semibold fs-8">
+                                        {{ backup.SERVIDOR }} 
+                                        {% if backup.IPSERVER %}- {{ backup.IPSERVER }}{% endif %}
+                                    </div>
+                                    <div class="text-muted fs-8">
+                                        <span class="badge badge-light-secondary fs-8">{{ backup.TYPE }}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="text-end">
+                                    <div class="text-dark fw-semibold fs-7">{{ backup.FECHA }}</div>
+                                    <div class="text-muted fw-semibold fs-8">{{ backup.HORA }}</div>
+                                    {% if backup.horas_transcurridas %}
+                                        <div class="fs-8 text-{% if backup.horas_transcurridas <= 24 %}success{% elif backup.horas_transcurridas <= 48 %}warning{% else %}danger{% endif %}">
+                                            Hace {{ backup.horas_transcurridas }}h
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-10">
+                        <i class="ki-duotone ki-information-2 fs-5tx text-muted mb-5">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                        </i>
+                        <div class="fs-6 fw-semibold text-gray-400">No hay backups recientes</div>
+                        <div class="fs-7 text-muted mt-2">Los backups aparecerán aquí cuando se ejecuten</div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Accesos Rápidos a Reportes -->
+<div class="row g-5 g-xl-10">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header border-0 pt-5">
+                <h3 class="card-title align-items-start flex-column">
+                    <span class="card-label fw-bold fs-3 mb-1">Reportes Disponibles</span>
+                    <span class="text-muted fw-semibold fs-7">Acceso rápido a reportes principales del sistema SACSBD</span>
+                </h3>
+            </div>
+            
+            <div class="card-body pt-5">
+                <div class="row g-5">
+                    <div class="col-md-4 col-lg-4">
+                        <a href="{% url 'reportes:cumplimiento_backup' %}" class="btn btn-flex btn-outline btn-text-gray-700 btn-outline-gray-300 bg-body h-70px w-100 flex-column">
+                            <i class="ki-duotone ki-shield-check fs-3x mb-2 text-success">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                            <span class="fs-7 fw-bold">Cumplimiento Backup</span>
+                            <span class="fs-8 text-muted">Análisis de cumplimiento por servidor</span>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-4 col-lg-4">
+                        <a href="{% url 'reportes:jobs_backup' %}" class="btn btn-flex btn-outline btn-text-gray-700 btn-outline-gray-300 bg-body h-70px w-100 flex-column">
+                            <i class="ki-duotone ki-setting-3 fs-3x mb-2 text-primary">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                                <span class="path3"></span>
+                                <span class="path4"></span>
+                                <span class="path5"></span>
+                            </i>
+                            <span class="fs-7 fw-bold">Jobs de Backup</span>
+                            <span class="fs-8 text-muted">Estado y resultados de jobs</span>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-4 col-lg-4">
+                        <a href="{% url 'reportes:archivos_backup' %}" class="btn btn-flex btn-outline btn-text-gray-700 btn-outline-gray-300 bg-body h-70px w-100 flex-column">
+                            <i class="ki-duotone ki-folder fs-3x mb-2 text-info">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                            <span class="fs-7 fw-bold">Archivos Backup</span>
+                            <span class="fs-8 text-muted">Ubicación y detalles de archivos</span>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-4 col-lg-4">
+                        <a href="{% url 'reportes:estados_db' %}" class="btn btn-flex btn-outline btn-text-gray-700 btn-outline-gray-300 bg-body h-70px w-100 flex-column">
+                            <i class="ki-duotone ki-data fs-3x mb-2 text-warning">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                                <span class="path3"></span>
+                            </i>
+                            <span class="fs-7 fw-bold">Estados DB</span>
+                            <span class="fs-8 text-muted">Estado actual de bases de datos</span>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-4 col-lg-4">
+                        <a href="{% url 'reportes:ultimos_backup' %}" class="btn btn-flex btn-outline btn-text-gray-700 btn-outline-gray-300 bg-body h-70px w-100 flex-column">
+                            <i class="ki-duotone ki-time fs-3x mb-2 text-danger">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                            <span class="fs-7 fw-bold">Últimos Backup</span>
+                            <span class="fs-8 text-muted">Backups más recientes por BD</span>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-4 col-lg-4">
+                        <a href="{% url 'reportes:listar_bd' %}" class="btn btn-flex btn-outline btn-text-gray-700 btn-outline-gray-300 bg-body h-70px w-100 flex-column">
+                            <i class="ki-duotone ki-abstract-26 fs-3x mb-2 text-dark">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                            <span class="fs-7 fw-bold">Listar BD</span>
+                            <span class="fs-8 text-muted">Inventario de bases de datos</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Información del Sistema -->
+<div class="row g-5 g-xl-10 mt-5">
+    <div class="col-12">
+        <div class="card bg-light-primary">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="symbol symbol-50px me-4">
+                        <span class="symbol-label bg-primary">
+                            <i class="ki-duotone ki-information fs-2x text-white">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                                <span class="path3"></span>
+                            </i>
+                        </span>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="text-primary fw-bold fs-6">Sistema SACSBD - Monitoreo y Control de Backups</div>
+                        <div class="text-muted fw-semibold fs-7">
+                            Última actualización: {{ last_updated|date:"d/m/Y H:i:s" }} - 
+                            Datos obtenidos de BACKUPSGENERADOS y JOBSBACKUPGENERADOS
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <button id="refresh-metrics" class="btn btn-sm btn-light-primary">
+                            <i class="ki-duotone ki-arrows-circle fs-4">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                            Actualizar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Actualización automática de métricas cada 5 minutos
+let refreshInterval;
+
+function refreshMetrics() {
+    fetch('{% url "reportes:api_dashboard_metrics" %}')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Métricas actualizadas:', data.data);
+                // Actualizar elementos específicos del DOM
+                updateMetricsDisplay(data.data);
+                showToast('Métricas actualizadas exitosamente', 'success');
+            } else {
+                console.error('Error en respuesta de métricas:', data.error);
+                showToast('Error al actualizar métricas', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error actualizando métricas:', error);
+            showToast('Error de conexión al actualizar métricas', 'error');
+        });
+}
+
+function updateMetricsDisplay(data) {
+    // Actualizar métricas si existen elementos en el DOM
+    if (data.total_servidores !== undefined) {
+        const servidoresElement = document.querySelector('.metric-card:nth-child(1) .fs-2hx');
+        if (servidoresElement) servidoresElement.textContent = data.total_servidores;
+    }
+    
+    if (data.total_bases_datos !== undefined) {
+        const basesElement = document.querySelector('.metric-card:nth-child(2) .fs-2hx');
+        if (basesElement) basesElement.textContent = data.total_bases_datos;
+    }
+    
+    if (data.backups_hoy !== undefined) {
+        const backupsHoyElement = document.querySelector('.metric-card:nth-child(3) .fs-2hx');
+        if (backupsHoyElement) backupsHoyElement.textContent = data.backups_hoy;
+    }
+    
+    if (data.backups_semana !== undefined) {
+        const backupsSemanaElement = document.querySelector('.metric-card:nth-child(4) .fs-2hx');
+        if (backupsSemanaElement) backupsSemanaElement.textContent = data.backups_semana;
+    }
+}
+
+function showToast(message, type = 'info') {
+    // Crear toast notification simple
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.innerHTML = `
+        <span>${message}</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    }, 3000);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar tooltips si están disponibles
+    if (typeof KTApp !== 'undefined') {
+        KTApp.init();
+    }
+    
+    // Configurar botón de actualización manual
+    const refreshButton = document.getElementById('refresh-metrics');
+    if (refreshButton) {
+        refreshButton.addEventListener('click', function() {
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Actualizando...';
+            
+            refreshMetrics();
+            
+            setTimeout(() => {
+                this.disabled = false;
+                this.innerHTML = '<i class="ki-duotone ki-arrows-circle fs-4"><span class="path1"></span><span class="path2"></span></i> Actualizar';
+            }, 2000);
+        });
+    }
+    
+    // Configurar auto-refresh cada 5 minutos
+    refreshInterval = setInterval(refreshMetrics, 300000); // 5 minutos
+    
+    // Limpiar interval al salir de la página
+    window.addEventListener('beforeunload', function() {
+        if (refreshInterval) {
+            clearInterval(refreshInterval);
+        }
+    });
+});
+</script>
+{% endblock %}

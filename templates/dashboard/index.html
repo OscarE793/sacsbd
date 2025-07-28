@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - {{ app_name }}{% endblock %}
+{% block page_title %}Dashboard SACSBD{% endblock %}
+
+{% block content %}
+<!-- Row -->
+<div class="row g-5 g-xl-10 mb-5 mb-xl-10">
+    <!-- Card: Total Users -->
+    <div class="col-md-6 col-lg-6 col-xl-6 col-xxl-3 mb-md-5 mb-xl-10">
+        <div class="card h-md-50 mb-5 mb-xl-10">
+            <div class="card-body d-flex flex-column flex-center">
+                <div class="mb-2">
+                    <i class="ki-duotone ki-profile-circle fs-5tx text-primary">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                        <span class="path3"></span>
+                    </i>
+                </div>
+                <div class="fs-2hx fw-bold text-dark mb-2 mt-5">
+                    {{ total_users|default:"150" }}
+                </div>
+                <div class="fs-7 fw-semibold text-gray-400 text-center">Usuarios Totales</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Card: Active Sessions -->
+    <div class="col-md-6 col-lg-6 col-xl-6 col-xxl-3 mb-md-5 mb-xl-10">
+        <div class="card h-md-50 mb-5 mb-xl-10">
+            <div class="card-body d-flex flex-column flex-center">
+                <div class="mb-2">
+                    <i class="ki-duotone ki-security-check fs-5tx text-success">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                    </i>
+                </div>
+                <div class="fs-2hx fw-bold text-dark mb-2 mt-5">
+                    {{ active_sessions|default:"23" }}
+                </div>
+                <div class="fs-7 fw-semibold text-gray-400 text-center">Sesiones Activas</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Card: Backups -->
+    <div class="col-md-6 col-lg-6 col-xl-6 col-xxl-3 mb-md-5 mb-xl-10">
+        <div class="card h-md-50 mb-5 mb-xl-10">
+            <div class="card-body d-flex flex-column flex-center">
+                <div class="mb-2">
+                    <i class="ki-duotone ki-data fs-5tx text-info">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                        <span class="path3"></span>
+                    </i>
+                </div>
+                <div class="fs-2hx fw-bold text-dark mb-2 mt-5">
+                    {{ total_backups|default:"45" }}
+                </div>
+                <div class="fs-7 fw-semibold text-gray-400 text-center">Respaldos</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Card: Server Status -->
+    <div class="col-md-6 col-lg-6 col-xl-6 col-xxl-3 mb-md-5 mb-xl-10">
+        <div class="card h-md-50 mb-5 mb-xl-10">
+            <div class="card-body d-flex flex-column flex-center">
+                <div class="mb-2">
+                    <i class="ki-duotone ki-technology-4 fs-5tx {% if server_status == 'online' %}text-success{% else %}text-danger{% endif %}">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                    </i>
+                </div>
+                <div class="fs-2hx fw-bold text-dark mb-2 mt-5">
+                    {% if server_status == 'online' %}
+                        <span class="badge badge-light-success fs-base">Online</span>
+                    {% else %}
+                        <span class="badge badge-light-danger fs-base">Offline</span>
+                    {% endif %}
+                </div>
+                <div class="fs-7 fw-semibold text-gray-400 text-center">Estado del Servidor</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Row -->
+<div class="row g-5 g-xl-10 mb-5 mb-xl-10">
+    <!-- Recent Activities -->
+    <div class="col-xl-8">
+        <div class="card card-xl-stretch mb-xl-8">
+            <div class="card-header border-0 pt-5">
+                <h3 class="card-title align-items-start flex-column">
+                    <span class="card-label fw-bold fs-3 mb-1">Actividades Recientes</span>
+                    <span class="text-muted fw-semibold fs-7">Últimas actividades del sistema</span>
+                </h3>
+                <div class="card-toolbar">
+                    <button type="button" class="btn btn-sm btn-icon btn-color-primary btn-active-light-primary" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
+                        <i class="ki-duotone ki-category fs-6">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                            <span class="path4"></span>
+                        </i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card-body pt-5">
+                {% if recent_activities %}
+                    {% for activity in recent_activities %}
+                        <div class="d-flex align-items-center mb-7">
+                            <div class="symbol symbol-50px me-5">
+                                <span class="symbol-label bg-light-{{ activity.color }}">
+                                    <i class="ki-duotone {{ activity.icon }} fs-2x text-{{ activity.color }}">
+                                        <span class="path1"></span>
+                                        <span class="path2"></span>
+                                    </i>
+                                </span>
+                            </div>
+                            
+                            <div class="flex-grow-1">
+                                <a href="#" class="text-dark fw-bold text-hover-primary fs-6">{{ activity.action }}</a>
+                                <span class="text-muted fw-semibold d-block">{{ activity.user }}</span>
+                            </div>
+                            
+                            <span class="text-muted fw-semibold">{{ activity.time }}</span>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center">
+                        <i class="ki-duotone ki-information-2 fs-5tx text-muted mb-5">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                        </i>
+                        <div class="fs-6 fw-semibold text-gray-400">No hay actividades recientes</div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- System Status -->
+    <div class="col-xl-4">
+        <div class="card card-xl-stretch mb-xl-8">
+            <div class="card-header border-0 pt-5">
+                <h3 class="card-title align-items-start flex-column">
+                    <span class="card-label fw-bold fs-3 mb-1">Estado del Sistema</span>
+                    <span class="text-muted fw-semibold fs-7">Información en tiempo real</span>
+                </h3>
+            </div>
+            
+            <div class="card-body pt-5">
+                <!-- CPU Usage -->
+                <div class="d-flex align-items-center mb-7">
+                    <span class="fw-semibold fs-6 text-gray-800 flex-grow-1">CPU</span>
+                    <span class="fw-bold fs-6 text-gray-800 pe-2">45%</span>
+                </div>
+                <div class="progress h-6px bg-light mb-7">
+                    <div class="progress-bar bg-primary" role="progressbar" style="width: 45%"></div>
+                </div>
+                
+                <!-- Memory Usage -->
+                <div class="d-flex align-items-center mb-7">
+                    <span class="fw-semibold fs-6 text-gray-800 flex-grow-1">Memoria</span>
+                    <span class="fw-bold fs-6 text-gray-800 pe-2">67%</span>
+                </div>
+                <div class="progress h-6px bg-light mb-7">
+                    <div class="progress-bar bg-warning" role="progressbar" style="width: 67%"></div>
+                </div>
+                
+                <!-- Disk Usage -->
+                <div class="d-flex align-items-center mb-7">
+                    <span class="fw-semibold fs-6 text-gray-800 flex-grow-1">Disco</span>
+                    <span class="fw-bold fs-6 text-gray-800 pe-2">23%</span>
+                </div>
+                <div class="progress h-6px bg-light mb-7">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: 23%"></div>
+                </div>
+                
+                <!-- Network -->
+                <div class="d-flex align-items-center mb-7">
+                    <span class="fw-semibold fs-6 text-gray-800 flex-grow-1">Red</span>
+                    <span class="badge badge-light-success">Estable</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row g-5 g-xl-10">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header border-0 pt-5">
+                <h3 class="card-title align-items-start flex-column">
+                    <span class="card-label fw-bold fs-3 mb-1">Acciones Rápidas</span>
+                    <span class="text-muted fw-semibold fs-7">Funciones más utilizadas</span>
+                </h3>
+            </div>
+            
+            <div class="card-body pt-5">
+                <div class="row g-5">
+                    <div class="col-md-3">
+                        <a href="#" class="btn btn-flex btn-outline btn-text-gray-700 btn-outline-gray-300 bg-body h-70px w-100 flex-column">
+                            <i class="ki-duotone ki-add-user fs-3x mb-2 text-primary">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                                <span class="path3"></span>
+                            </i>
+                            <span class="fs-7 fw-bold">Nuevo Usuario</span>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <a href="#" class="btn btn-flex btn-outline btn-text-gray-700 btn-outline-gray-300 bg-body h-70px w-100 flex-column">
+                            <i class="ki-duotone ki-data fs-3x mb-2 text-success">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                                <span class="path3"></span>
+                            </i>
+                            <span class="fs-7 fw-bold">Crear Backup</span>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <a href="{% url 'reportes:dashboard' %}" class="btn btn-flex btn-outline btn-text-gray-700 btn-outline-gray-300 bg-body h-70px w-100 flex-column">
+                            <i class="ki-duotone ki-chart-simple fs-3x mb-2 text-info">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                                <span class="path3"></span>
+                                <span class="path4"></span>
+                            </i>
+                            <span class="fs-7 fw-bold">Ver Reportes</span>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <a href="{% url 'dashboard:settings' %}" class="btn btn-flex btn-outline btn-text-gray-700 btn-outline-gray-300 bg-body h-70px w-100 flex-column">
+                            <i class="ki-duotone ki-setting-3 fs-3x mb-2 text-warning">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                                <span class="path3"></span>
+                                <span class="path4"></span>
+                                <span class="path5"></span>
+                            </i>
+                            <span class="fs-7 fw-bold">Configuración</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Actualizaciones en tiempo real del dashboard
+    setInterval(function() {
+        // Aquí puedes agregar código para actualizar las métricas en tiempo real
+        console.log('Actualizando métricas del dashboard...');
+    }, 30000); // Actualizar cada 30 segundos
+</script>
+{% endblock %}

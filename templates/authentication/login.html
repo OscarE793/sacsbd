@@ -1,0 +1,150 @@
+<!-- templates/authentication/login.html -->
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}SACS_BD - Iniciar Sesión{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --sacs-primary: #1b84ff;
+        --sacs-secondary: #f1416c;
+        --sacs-success: #50cd89;
+        --sacs-warning: #ffc700;
+        --sacs-danger: #f1416c;
+    }
+    
+    .sacs-login-bg {
+        background-image: url('{% static 'assets/media/backgrounds/Fondo Colorido login.png' %}');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+    }
+    
+    .sacs-card {
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+    
+    .sacs-logo {
+        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+    }
+</style>
+{% endblock %}
+
+{% block body_content %}
+<div class="flex items-center justify-center min-h-screen sacs-login-bg">
+    <div class="kt-card sacs-card max-w-md w-full m-4">
+        <form method="post" class="kt-card-content flex flex-col gap-6 p-8" id="sacs_login_form" autocomplete="off">
+            {% csrf_token %}
+            
+            <!-- Header con Logo -->
+            <div class="text-center mb-4">
+                <div class="mb-4">
+                    <img src="{% static 'custom/img/sacs-logo.png' %}" alt="SACS_BD" class="sacs-logo h-16 mx-auto"/>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">SACS_BD</h1>
+                <p class="text-sm text-gray-600">Sistema de Administración y Control de Copias de Seguridad</p>
+            </div>
+            
+            <!-- Mensajes de Error/Info -->
+            {% if form.errors or messages %}
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                    {% if form.errors %}
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                                <p class="text-red-600 text-sm">{{ error }}</p>
+                            {% endfor %}
+                        {% endfor %}
+                        {% for error in form.non_field_errors %}
+                            <p class="text-red-600 text-sm">{{ error }}</p>
+                        {% endfor %}
+                    {% endif %}
+                    {% for message in messages %}
+                        <p class="text-red-600 text-sm">{{ message }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            <!-- Campo Usuario -->
+            <div class="flex flex-col gap-2">
+                <label class="kt-form-label font-medium text-gray-700">Usuario</label>
+                {{ form.username }}
+            </div>
+            
+            <!-- Campo Contraseña -->
+            <div class="flex flex-col gap-2">
+                <div class="flex items-center justify-between">
+                    <label class="kt-form-label font-medium text-gray-700">Contraseña</label>
+                    <a href="{% url 'authentication:password_reset' %}" 
+                       class="text-sm text-blue-600 hover:text-blue-800 transition-colors">
+                        ¿Olvidó su contraseña?
+                    </a>
+                </div>
+                <div class="kt-input" data-kt-toggle-password="true">
+                    {{ form.password }}
+                    <span class="kt-input-icon" data-kt-password-meter-toggle="true">
+                        <i class="ki-outline ki-eye-slash text-gray-500"></i>
+                        <i class="ki-outline ki-eye text-gray-500 hidden"></i>
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Remember Me -->
+            <label class="kt-label flex items-center">
+                {{ form.remember_me }}
+                <span class="kt-checkbox-label ml-2 text-sm text-gray-600">Recordar mi sesión</span>
+            </label>
+            
+            <!-- Botón Login -->
+            <button class="kt-btn kt-btn-primary w-full py-3 font-medium transition-all duration-200 hover:shadow-lg" 
+                    type="submit">
+                <span class="kt-indicator-label">Iniciar Sesión</span>
+                <span class="kt-indicator-progress hidden">
+                    Verificando... <span class="spinner-border spinner-border-sm ml-2"></span>
+                </span>
+            </button>
+            
+            <!-- Footer -->
+            <div class="text-center text-xs text-gray-500 mt-4">
+                <p>&copy; 2025 SACS_BD. Todos los derechos reservados.</p>
+                <p>Versión 1.0.0 | Soporte: soporte@sacsbd.com</p>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('sacs_login_form');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const indicatorLabel = submitBtn.querySelector('.kt-indicator-label');
+    const indicatorProgress = submitBtn.querySelector('.kt-indicator-progress');
+    
+    form.addEventListener('submit', function() {
+        // Mostrar loading state
+        indicatorLabel.classList.add('hidden');
+        indicatorProgress.classList.remove('hidden');
+        submitBtn.disabled = true;
+    });
+    
+    // Validation feedback
+    const inputs = form.querySelectorAll('input');
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            if (this.value.trim() === '') {
+                this.classList.add('border-red-300');
+                this.classList.remove('border-gray-300');
+            } else {
+                this.classList.remove('border-red-300');
+                this.classList.add('border-gray-300');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
