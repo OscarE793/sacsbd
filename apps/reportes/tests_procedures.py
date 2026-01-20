@@ -21,9 +21,9 @@ class ProcedureTestCase(TestCase):
                 cursor.execute("SELECT 1 as test")
                 result = cursor.fetchone()
                 self.assertEqual(result[0], 1)
-                logger.info("✅ Conexión a base de datos exitosa")
+                logger.info("Conexión a base de datos exitosa")
         except Exception as e:
-            logger.error(f"❌ Error de conexión: {e}")
+            logger.error(f"Error de conexión: {e}")
             self.fail(f"Error de conexión: {e}")
     
     def test_tables_exist(self):
@@ -35,9 +35,9 @@ class ProcedureTestCase(TestCase):
                 query = f"SELECT COUNT(*) FROM {table}"
                 result = ejecutar_consulta_personalizada(query)
                 self.assertIsNotNone(result)
-                logger.info(f"✅ Tabla {table} existe y es accesible")
+                logger.info(f"Tabla {table} existe y es accesible")
             except Exception as e:
-                logger.error(f"❌ Error accediendo tabla {table}: {e}")
+                logger.error(f"Error accediendo tabla {table}: {e}")
                 self.fail(f"Tabla {table} no accesible: {e}")
     
     def test_procedures_exist(self):
@@ -47,9 +47,9 @@ class ProcedureTestCase(TestCase):
                 query = f"SELECT 1 FROM sys.procedures WHERE name = '{proc_name}'"
                 result = ejecutar_consulta_personalizada(query)
                 self.assertTrue(len(result) > 0, f"Procedimiento {proc_name} no encontrado")
-                logger.info(f"✅ Procedimiento {proc_name} existe")
+                logger.info(f"Procedimiento {proc_name} existe")
             except Exception as e:
-                logger.error(f"❌ Error verificando procedimiento {proc_name}: {e}")
+                logger.error(f"Error verificando procedimiento {proc_name}: {e}")
     
     def test_simple_procedures(self):
         """Prueba procedimientos almacenados sin parámetros"""
@@ -72,9 +72,9 @@ class ProcedureTestCase(TestCase):
             try:
                 result = ejecutar_procedimiento_almacenado(proc_name)
                 self.assertIsInstance(result, list)
-                logger.info(f"✅ Procedimiento {proc_name} ejecutado exitosamente - {len(result)} registros")
+                logger.info(f"Procedimiento {proc_name} ejecutado exitosamente - {len(result)} registros")
             except Exception as e:
-                logger.warning(f"⚠️ Error ejecutando {proc_name}: {e}")
+                logger.warning(f"Error ejecutando {proc_name}: {e}")
     
     def test_procedures_with_params(self):
         """Prueba procedimientos que requieren parámetros"""
@@ -97,14 +97,14 @@ class ProcedureTestCase(TestCase):
             try:
                 if proc_name == 'sp_BakGenerados':
                     # Este procedimiento inserta datos, solo probamos si existe
-                    logger.info(f"⚠️ Saltando {proc_name} (procedimiento de inserción)")
+                    logger.info(f"Saltando {proc_name} (procedimiento de inserción)")
                     continue
                     
                 result = ejecutar_procedimiento_almacenado(proc_name, params)
                 self.assertIsInstance(result, list)
-                logger.info(f"✅ Procedimiento {proc_name} con parámetros ejecutado exitosamente - {len(result)} registros")
+                logger.info(f"Procedimiento {proc_name} con parámetros ejecutado exitosamente - {len(result)} registros")
             except Exception as e:
-                logger.warning(f"⚠️ Error ejecutando {proc_name} con parámetros {params}: {e}")
+                logger.warning(f"Error ejecutando {proc_name} con parámetros {params}: {e}")
     
     def test_custom_queries(self):
         """Prueba las consultas personalizadas"""
@@ -114,9 +114,9 @@ class ProcedureTestCase(TestCase):
             try:
                 result = ejecutar_consulta_personalizada(query_sql)
                 self.assertIsInstance(result, list)
-                logger.info(f"✅ Consulta {query_name} ejecutada exitosamente - {len(result)} registros")
+                logger.info(f"Consulta {query_name} ejecutada exitosamente - {len(result)} registros")
             except Exception as e:
-                logger.warning(f"⚠️ Error ejecutando consulta {query_name}: {e}")
+                logger.warning(f"Error ejecutando consulta {query_name}: {e}")
     
     def test_dashboard_metrics(self):
         """Prueba específica para las métricas del dashboard"""
@@ -137,10 +137,10 @@ class ProcedureTestCase(TestCase):
                 self.assertIn(metric, metrics)
                 self.assertIsNotNone(metrics[metric])
             
-            logger.info(f"✅ Métricas del dashboard: {metrics}")
+            logger.info(f"Métricas del dashboard: {metrics}")
             
         except Exception as e:
-            logger.error(f"❌ Error en métricas del dashboard: {e}")
+            logger.error(f"Error en métricas del dashboard: {e}")
             self.fail(f"Error en métricas: {e}")
 
 
@@ -240,4 +240,4 @@ if __name__ == '__main__':
     if results['errors']:
         print("\n=== ERRORES ===")
         for error in results['errors']:
-            print(f"❌ {error}")
+            print(f"{error}")

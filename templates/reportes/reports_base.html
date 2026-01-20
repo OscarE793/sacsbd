@@ -252,7 +252,7 @@
 // Configuración global para reportes
 window.ReportsConfig = {
     exportUrl: "{% url 'reportes:dashboard' %}",
-    refreshInterval: 30000, // 30 segundos
+    refreshInterval: 0, // Desactivado (era 30000 = 30 segundos)
     language: {
         processing: "Procesando...",
         lengthMenu: "Mostrar _MENU_ registros",
@@ -383,28 +383,30 @@ function setupFilters() {
 
 function refreshReportData(silent = false) {
     if (!silent) {
-        // Mostrar indicador de carga
-        Swal.fire({
-            title: 'Actualizando datos...',
-            text: 'Por favor espere',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
+        // Mostrar indicador de carga solo si no es silencioso
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Actualizando datos...',
+                text: 'Por favor espere',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+        }
     }
     
     // Recargar la página o hacer AJAX call específico
     setTimeout(function() {
-        if (!silent) {
+        if (!silent && typeof Swal !== 'undefined') {
             Swal.close();
         }
         
         // Si hay una función específica de refresh, la llamamos
         if (typeof refreshSpecificReport === 'function') {
             refreshSpecificReport();
-        } else {
-            // Sino, recargamos la página
+        } else if (!silent) {
+            // Solo recargar la página si NO es silencioso
             location.reload();
         }
     }, 1000);

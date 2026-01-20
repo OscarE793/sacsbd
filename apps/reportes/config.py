@@ -208,7 +208,7 @@ QUERIES = {
     
     'ultimos_backups_por_bd': """
         WITH UltimosBackupsPorBD AS (
-            SELECT 
+            SELECT
                 SERVIDOR,
                 DatabaseName,
                 IPSERVER,
@@ -216,19 +216,19 @@ QUERIES = {
                 FECHA,
                 HORA,
                 ROW_NUMBER() OVER (
-                    PARTITION BY SERVIDOR, DatabaseName 
-                    ORDER BY 
+                    PARTITION BY SERVIDOR, DatabaseName
+                    ORDER BY
                         CONVERT(date, SUBSTRING(FECHA,7,4) + '-' + SUBSTRING(FECHA,4,2) + '-' + SUBSTRING(FECHA,1,2)) DESC,
                         CONVERT(time, HORA) DESC
                 ) as rn,
-                DATEDIFF(hour, 
-                    CONVERT(datetime, SUBSTRING(FECHA,7,4) + '-' + SUBSTRING(FECHA,4,2) + '-' + SUBSTRING(FECHA,1,2) + ' ' + HORA), 
+                DATEDIFF(hour,
+                    CONVERT(datetime, SUBSTRING(FECHA,7,4) + '-' + SUBSTRING(FECHA,4,2) + '-' + SUBSTRING(FECHA,1,2) + ' ' + HORA),
                     GETDATE()
                 ) as horas_transcurridas
             FROM BACKUPSGENERADOS
             WHERE SERVIDOR IS NOT NULL AND DatabaseName IS NOT NULL
         )
-        SELECT 
+        SELECT
             SERVIDOR,
             DatabaseName,
             IPSERVER,
@@ -236,16 +236,190 @@ QUERIES = {
             FECHA,
             HORA,
             horas_transcurridas,
-            CASE 
+            CASE
                 WHEN horas_transcurridas <= 24 THEN 'success'
                 WHEN horas_transcurridas <= 48 THEN 'warning'
                 ELSE 'danger'
             END as status_class
         FROM UltimosBackupsPorBD
         WHERE rn = 1
-        ORDER BY 
+        ORDER BY
             CONVERT(date, SUBSTRING(FECHA,7,4) + '-' + SUBSTRING(FECHA,4,2) + '-' + SUBSTRING(FECHA,1,2)) DESC,
             CONVERT(time, HORA) DESC
+    """,
+
+    # === CONSULTAS ADICIONALES EXTRAÍDAS DE VIEWS.PY ===
+
+    'cumplimiento_fallback': """
+        SELECT
+            bg.SERVIDOR,
+            bg.DatabaseName,
+            bg.IPSERVER,
+            COUNT(*) as TOTAL,
+            30 as TOTALPROGRAM,
+            CAST((COUNT(*) * 100.0 / 30) AS DECIMAL(5,2)) as PORCENTAJE
+        FROM BACKUPSGENERADOS bg
+        WHERE CONVERT(date, SUBSTRING(bg.FECHA,7,4) + '-' + SUBSTRING(bg.FECHA,4,2) + '-' + SUBSTRING(bg.FECHA,1,2))
+              BETWEEN CONVERT(date, %s) AND CONVERT(date, %s)
+        GROUP BY bg.SERVIDOR, bg.DatabaseName, bg.IPSERVER
+        ORDER BY bg.SERVIDOR, bg.DatabaseName
+    """,
+
+    'servidores_jobs': """
+        SELECT DISTINCT SERVIDOR as servidor, IPSERVER as ip_servidor, COUNT(*) as total_jobs
+        FROM JOBSBACKUPGENERADOS
+        WHERE SERVIDOR IS NOT NULL AND SERVIDOR != ''
+        GROUP BY SERVIDOR, IPSERVER
+        ORDER BY SERVIDOR
+    """,
+
+    'tipos_resultado_jobs': """
+        SELECT DISTINCT RESULTADO, COUNT(*) as cantidad
+        FROM JOBSBACKUPGENERADOS
+        WHERE RESULTADO IS NOT NULL AND RESULTADO != ''
+        GROUP BY RESULTADO
+        ORDER BY cantidad DESC
+    """,
+
+    'archivos_backup_detallado': """
+        SELECT
+            BCK_ID,
+            SERVIDOR,
+            DatabaseName as database_name,
+            IPSERVER,
+            TYPE as tipo_backup,
+            FECHA,
+            HORA,
+            physical_device_name as ruta_archivo,
+            CASE TYPE
+                WHEN 'FULL' THEN 'Completo'
+                WHEN 'INCREMENTAL' THEN 'Incremental'
+                WHEN 'DIFF' THEN 'Diferencial'
+                WHEN 'LOG' THEN 'Log'
+                ELSE ISNULL(TYPE, 'Sin tipo')
+            END as tipo_descripcion,
+            LEN(physical_device_name) as longitud_ruta
+        FROM BACKUPSGENERADOS
+        WHERE CONVERT(date, SUBSTRING(FECHA,7,4) + '-' + SUBSTRING(FECHA,4,2) + '-' + SUBSTRING(FECHA,1,2)) >= DATEADD(day, -%s, GETDATE())
+            AND physical_device_name IS NOT NULL
+        ORDER BY
+            CONVERT(date, SUBSTRING(FECHA,7,4) + '-' + SUBSTRING(FECHA,4,2) + '-' + SUBSTRING(FECHA,1,2)) DESC,
+            CONVERT(time, HORA) DESC
+    """,
+
+    'estados_db_log': """
+        SELECT
+            ServerName as SERVIDOR,
+            DatabaseName as DATABASE_NAME,
+            LastLogDate as FECHA_DE_CREACION,
+            StateDesc as ESTADO,
+            [State] as TIPO_ESTADO,
+            ServerIP as IPSERVER,
+            LogID
+        FROM dbo.DatabaseStatusLog
+        WHERE 1=1
+    """,
+
+    'estados_db_direct': """
+        DECLARE @ServerIP VARCHAR(48);
+        SELECT TOP 1 @ServerIP = REPLACE(local_net_address, '::1', '127.0.0.1')
+        FROM sys.dm_exec_connections
+        WHERE local_net_address IS NOT NULL;
+
+        SELECT
+            @@SERVERNAME as SERVIDOR,
+            name as DATABASE_NAME,
+            create_date as FECHA_DE_CREACION,
+            state_desc as ESTADO,
+            CONVERT(NVARCHAR(30), state) as TIPO_ESTADO,
+            ISNULL(@ServerIP, 'N/A') as IPSERVER
+        FROM sys.databases
+        WHERE database_id > 4
+        ORDER BY name
+    """,
+
+    'listar_bd_completo': """
+        SELECT
+            bg.DatabaseName as database_name,
+            bg.SERVIDOR as servidor,
+            bg.IPSERVER as ip_servidor,
+            COUNT(*) as total_backups,
+            MAX(CONVERT(date, SUBSTRING(bg.FECHA,7,4) + '-' + SUBSTRING(bg.FECHA,4,2) + '-' + SUBSTRING(bg.FECHA,1,2))) as ultimo_backup,
+            COUNT(DISTINCT bg.TYPE) as tipos_backup_count,
+            STUFF((
+                SELECT DISTINCT ', ' + TYPE
+                FROM BACKUPSGENERADOS bg2
+                WHERE bg2.DatabaseName = bg.DatabaseName AND bg2.SERVIDOR = bg.SERVIDOR
+                FOR XML PATH('')
+            ), 1, 2, '') as tipos_backup
+        FROM BACKUPSGENERADOS bg
+        WHERE bg.DatabaseName IS NOT NULL AND bg.SERVIDOR IS NOT NULL
+        GROUP BY bg.DatabaseName, bg.SERVIDOR, bg.IPSERVER
+        ORDER BY bg.SERVIDOR, bg.DatabaseName
+    """,
+
+    'disk_growth_detallado': """
+        SELECT
+            LogID,
+            ServerIP,
+            DatabaseName,
+            FileName,
+            FilePath,
+            FileSizeMB,
+            DiskFreeMB,
+            LogDate,
+            CAST((DiskFreeMB * 100.0 / (FileSizeMB + DiskFreeMB)) AS DECIMAL(5,2)) as PorcentajeLibre,
+            CASE
+                WHEN DiskFreeMB < 10240 THEN 'danger'
+                WHEN DiskFreeMB < 51200 THEN 'warning'
+                ELSE 'success'
+            END as status_class
+        FROM DiskGrowthLog
+        WHERE CONVERT(date, LogDate) BETWEEN %s AND %s
+    """,
+
+    'servidores_disk_growth': """
+        SELECT DISTINCT ServerIP as servidor, COUNT(*) as total_logs
+        FROM DiskGrowthLog
+        WHERE ServerIP IS NOT NULL AND ServerIP != ''
+        GROUP BY ServerIP
+        ORDER BY ServerIP
+    """,
+
+    'bases_datos_disk_growth': """
+        SELECT DISTINCT DatabaseName as base_datos, COUNT(*) as total_logs
+        FROM DiskGrowthLog
+        WHERE DatabaseName IS NOT NULL AND DatabaseName != ''
+        GROUP BY DatabaseName
+        ORDER BY DatabaseName
+    """,
+
+    'disk_growth_tendencia': """
+        SELECT
+            CONVERT(date, LogDate) as Fecha,
+            ServerIP,
+            DatabaseName,
+            MAX(FileSizeMB) as TamanoMB,
+            MIN(DiskFreeMB) as EspacioLibreMB
+        FROM DiskGrowthLog
+        WHERE LogDate >= DATEADD(day, -7, GETDATE())
+        GROUP BY CONVERT(date, LogDate), ServerIP, DatabaseName
+        ORDER BY Fecha DESC
+    """,
+
+    'jobs_resultado_directo': """
+        SELECT
+            RESULTADO,
+            SERVIDOR,
+            IPSERVER,
+            CONVERT(varchar, FECHA_Y_HORA_INICIO, 103) as FECHA,
+            CONVERT(varchar, FECHA_Y_HORA_INICIO, 108) as HORA,
+            NOMBRE_DEL_JOB,
+            CAST(PASO as varchar) as PASO,
+            MENSAJE
+        FROM JOBSBACKUPGENERADOS
+        WHERE CONVERT(date, FECHA_Y_HORA_INICIO) BETWEEN %s AND %s
+        ORDER BY FECHA_Y_HORA_INICIO DESC
     """
 }
 

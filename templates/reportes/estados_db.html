@@ -158,7 +158,7 @@
 <!-- Tabla de estados -->
 <div class="card shadow mb-4">
     <div class="card-header py-3">
-        <h6 class="m-0 font-weight-bold text-primary">Estados de Bases de Datos - sp_estadosdb</h6>
+        <h6 class="m-0 font-weight-bold text-primary">Estados de Bases de Datos - sp_MonitorDatabaseStatus</h6>
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -167,6 +167,7 @@
                     <tr class="text-center">
                         <th>SERVIDOR</th>
                         <th>BASE DE DATOS</th>
+                        <th>IP SERVIDOR</th>
                         <th>FECHA DE CREACION</th>
                         <th>ESTADO</th>
                         <th>TIPO ESTADO</th>
@@ -186,7 +187,13 @@
                             <td class="text-start">
                                 <div class="d-flex align-items-center">
                                     <i class="fas fa-database text-info me-2"></i>
-                                    <span class="fw-bold">{{ resultado.DATABASE_NAME|default:resultado.BASE_DE_DATOS }}</span>
+                                    <span class="fw-bold">{{ resultado.DATABASE_NAME }}</span>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <i class="fas fa-network-wired text-warning me-2"></i>
+                                    <span class="fw-bold">{{ resultado.IPSERVER|default:"N/A" }}</span>
                                 </div>
                             </td>
                             <td class="text-center">
@@ -236,7 +243,7 @@
                             </td>
                             <td class="text-center">
                                 <button type="button" class="btn btn-sm btn-outline-primary" 
-                                        onclick="mostrarDetalleEstado('{{ resultado.SERVIDOR }}', '{{ resultado.DATABASE_NAME|default:resultado.BASE_DE_DATOS }}', '{{ resultado.ESTADO }}', '{{ resultado.TIPO_ESTADO }}', '{{ resultado.FECHA_DE_CREACION }}')">
+                                        onclick="mostrarDetalleEstado('{{ resultado.SERVIDOR }}', '{{ resultado.DATABASE_NAME }}', '{{ resultado.ESTADO }}', '{{ resultado.TIPO_ESTADO }}', '{{ resultado.FECHA_DE_CREACION }}', '{{ resultado.IPSERVER|default:"N/A" }}')">
                                     <i class="fas fa-eye"></i>
                                 </button>
                             </td>
@@ -244,7 +251,7 @@
                         {% endfor %}
                     {% else %}
                         <tr class="text-center" style="font-size: smaller;">
-                            <td class="text-center" colspan="6">
+                            <td class="text-center" colspan="7">
                                 <div class="alert alert-info">
                                     <h5><i class="fas fa-info-circle me-2"></i>No hay datos</h5>
                                     <p>No se encontraron bases de datos o el stored procedure no devolvió resultados.</p>
@@ -309,19 +316,23 @@
                 <hr>
                 <div class="row">
                     <div class="col-md-6">
+                        <strong>IP Servidor:</strong><br>
+                        <span id="modalIPServidor"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Fecha de Creación:</strong><br>
+                        <span id="modalFechaCreacion"></span>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-6">
                         <strong>Estado:</strong><br>
                         <span id="modalEstado"></span>
                     </div>
                     <div class="col-md-6">
                         <strong>Tipo de Estado:</strong><br>
                         <span id="modalTipoEstado"></span>
-                    </div>
-                </div>
-                <hr>
-                <div class="row">
-                    <div class="col-12">
-                        <strong>Fecha de Creación:</strong><br>
-                        <span id="modalFechaCreacion"></span>
                     </div>
                 </div>
             </div>
@@ -381,7 +392,7 @@ document.addEventListener('DOMContentLoaded', function() {
             "responsive": true,
             "order": [[ 0, "asc" ], [ 1, "asc" ]], // Ordenar por servidor y base de datos
             "columnDefs": [
-                { "orderable": false, "targets": 5 } // Columna de acciones no ordenable
+                { "orderable": false, "targets": 6 } // Columna de acciones no ordenable
             ]
         });
     }
@@ -415,23 +426,23 @@ function setupEstadosExportButtons() {
 
 function exportEstadosToExcel() {
     const params = new URLSearchParams(window.location.search);
-    const url = `{% url 'reportes:estados_db' %}?format=excel&${params.toString()}`;
-    window.open(url, '_blank');
-    showNotification('Funcionalidad de Excel en desarrollo', 'info');
+    const url = `{% url 'reportes:export_estados_excel' %}?${params.toString()}`;
+    showNotification('Generando Excel con formato profesional...', 'info');
+    window.location.href = url;
 }
 
 function exportEstadosToPDF() {
-    showNotification('Funcionalidad de PDF en desarrollo', 'info');
+    const params = new URLSearchParams(window.location.search);
+    const url = `{% url 'reportes:export_estados_pdf' %}?${params.toString()}`;
+    showNotification('Generando PDF de estados...', 'success');
+    window.location.href = url;
 }
 
 function exportEstadosToCSV() {
-    // Exportar tabla actual a CSV
-    const table = document.getElementById('estadosTable');
-    if (table) {
-        const csv = tableToCSV(table);
-        downloadCSV(csv, 'estados_bases_datos.csv');
-        showNotification('Exportando a CSV...', 'success');
-    }
+    const params = new URLSearchParams(window.location.search);
+    const url = `{% url 'reportes:export_estados_csv' %}?${params.toString()}`;
+    showNotification('Generando CSV...', 'info');
+    window.location.href = url;
 }
 
 function refreshEstadosData() {
@@ -442,12 +453,13 @@ function refreshEstadosData() {
 }
 
 // Función para mostrar detalle en modal
-function mostrarDetalleEstado(servidor, baseDatos, estado, tipoEstado, fechaCreacion) {
+function mostrarDetalleEstado(servidor, baseDatos, estado, tipoEstado, fechaCreacion, ipServidor) {
     document.getElementById('modalServidor').textContent = servidor;
     document.getElementById('modalBaseDatos').textContent = baseDatos;
     document.getElementById('modalEstado').textContent = estado;
     document.getElementById('modalTipoEstado').textContent = tipoEstado;
     document.getElementById('modalFechaCreacion').textContent = fechaCreacion;
+    document.getElementById('modalIPServidor').textContent = ipServidor || 'N/A';
     
     var modal = new bootstrap.Modal(document.getElementById('detalleEstadoModal'));
     modal.show();
@@ -463,7 +475,7 @@ function tableToCSV(table) {
         const cols = row.querySelectorAll('td, th');
         const csvRow = [];
         
-        for (let j = 0; j < cols.length - 1; j++) { // Excluir columna de acciones
+        for (let j = 0; j < cols.length - 1; j++) { // Excluir columna de acciones (última columna)
             // Limpiar el texto del contenido de badges e iconos
             let cellText = cols[j].textContent.trim().replace(/"/g, '""');
             csvRow.push(`"${cellText}"`); 

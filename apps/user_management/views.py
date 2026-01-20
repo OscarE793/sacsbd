@@ -12,6 +12,7 @@ from django.urls import reverse
 import logging
 
 from .models import UserProfile, Role, UserRole, AuditLog
+from django.db import connection
 from .forms import (
     UserCreateForm, UserEditForm, PasswordChangeForm, 
     RoleForm, UserFilterForm
@@ -254,6 +255,96 @@ def user_delete(request, pk):
     except Exception as e:
         logger.error(f"Error en user_delete: {e}")
         return JsonResponse({'success': False, 'message': str(e)})
+
+
+@login_required
+def database_status_report(request):
+    """Reporte de estado de bases de datos"""
+    try:
+        # Verificar permisos
+        if not has_permission(request.user, 'puede_ver_reportes'):
+            return HttpResponseForbidden("No tienes permisos para ver reportes")
+        
+        # Obtener filtros de búsqueda
+        search = request.GET.get('search', '')
+        server_filter = request.GET.get('server', '')
+        state_filter = request.GET.get('state', '')
+        
+        # Consulta base
+        with connection.cursor() as cursor:
+            # Ejecutar el SP para actualizar datos
+            try:
+                cursor.execute("EXEC usp_MonitorDatabaseStatus")
+            except Exception as sp_error:
+                logger.warning(f"Error ejecutando SP usp_MonitorDatabaseStatus: {sp_error}")
+            
+            # Consultar los datos
+            query = """
+                SELECT LogID, ServerName, ServerIP, DatabaseName, 
+                       [State], StateDesc, LastLogDate
+                FROM dbo.DatabaseStatusLog
+                WHERE 1=1
+            """
+            params = []
+            
+            if search:
+                query += " AND (DatabaseName LIKE %s OR ServerName LIKE %s)"
+                params.extend([f'%{search}%', f'%{search}%'])
+            
+            if server_filter:
+                query += " AND ServerName = %s"
+                params.append(server_filter)
+            
+            if state_filter:
+                query += " AND [State] = %s"
+                params.append(state_filter)
+            
+            query += " ORDER BY LastLogDate DESC"
+            
+            cursor.execute(query, params)
+            columns = [col[0] for col in cursor.description]
+            logs = [dict(zip(columns, row)) for row in cursor.fetchall()]
+        
+        # Obtener servidores únicos para el filtro
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT DISTINCT ServerName FROM dbo.DatabaseStatusLog ORDER BY ServerName")
+            servers = [row[0] for row in cursor.fetchall()]
+        
+        # Obtener estados únicos para el filtro
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT DISTINCT [State], StateDesc FROM dbo.DatabaseStatusLog ORDER BY [State]")
+            states = [{'state': row[0], 'desc': row[1]} for row in cursor.fetchall()]
+        
+        # Paginación
+        paginator = Paginator(logs, 25)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
+        # Estadísticas
+        stats = {
+            'total_databases': len(logs),
+            'online_databases': len([log for log in logs if log['State'] == 'ONLINE']),
+            'offline_databases': len([log for log in logs if log['State'] == 'OFFLINE']),
+            'last_update': max([log['LastLogDate'] for log in logs], default=None) if logs else None
+        }
+        
+        context = {
+            'page_title': 'Reporte de Estado de Bases de Datos',
+            'logs': page_obj,
+            'servers': servers,
+            'states': states,
+            'stats': stats,
+            'search': search,
+            'server_filter': server_filter,
+            'state_filter': state_filter,
+        }
+        
+        return render(request, 'reportes/database_status_report.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error en database_status_report: {e}")
+        messages.error(request, f'Error al cargar reporte de estado de bases de datos: {str(e)}')
+        return render(request, 'reportes/database_status_report.html', {'page_title': 'Reporte de Estado de Bases de Datos'})
 
 
 @login_required

@@ -354,23 +354,23 @@ function setupCumplimientoExportButtons() {
 
 function exportCumplimientoToExcel() {
     const params = new URLSearchParams(window.location.search);
-    const url = `{% url 'reportes:reporte_cumplimiento' %}?${params.toString()}`;
-    window.open(url, '_blank');
-    showNotification('Descargando reporte de cumplimiento en Excel...', 'success');
+    const url = `{% url 'reportes:export_cumplimiento_excel' %}?${params.toString()}`;
+    showNotification('Generando Excel con formato profesional...', 'info');
+    window.location.href = url;
 }
 
 function exportCumplimientoToPDF() {
-    showNotification('Funcionalidad de PDF en desarrollo', 'info');
+    const params = new URLSearchParams(window.location.search);
+    const url = `{% url 'reportes:export_cumplimiento_pdf' %}?${params.toString()}`;
+    showNotification('Generando PDF de cumplimiento...', 'success');
+    window.location.href = url;
 }
 
 function exportCumplimientoToCSV() {
-    // Exportar tabla actual a CSV
-    const table = document.getElementById('cumplimientoTable');
-    if (table) {
-        const csv = tableToCSV(table);
-        downloadCSV(csv, 'cumplimiento_backup.csv');
-        showNotification('Exportando a CSV...', 'success');
-    }
+    const params = new URLSearchParams(window.location.search);
+    const url = `{% url 'reportes:export_cumplimiento_csv' %}?${params.toString()}`;
+    showNotification('Generando CSV...', 'info');
+    window.location.href = url;
 }
 
 function refreshCumplimientoData() {

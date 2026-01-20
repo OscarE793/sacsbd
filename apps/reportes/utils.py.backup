@@ -5,30 +5,6 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
-# Whitelist de procedimientos almacenados permitidos (Seguridad)
-ALLOWED_STORED_PROCEDURES = {
-    'sp_backup_history',
-    'sp_BakGenerados',
-    'sp_countBck',
-    'sp_countTotalBck',
-    'sp_ejecutonjobs_bck',
-    'sp_estadosdb',
-    'sp_genBak',
-    'sp_historicoBck',
-    'sp_Lista_Estado',
-    'sp_listausuarios',
-    'sp_porcentajeGenBak',
-    'sp_Programaciondebcks',
-    'sp_PromedioUltimosBck',
-    'sp_resultadoJobsBck',
-    'sp_TotalBD',
-    'sp_TotalSemana',
-    'sp_ultimosbck',
-    'sp_DashboardMetrics',
-    'sp_MonitorDatabaseStatus',
-    'usp_MonitorDiskGrowth',
-}
-
 
 def ejecutar_sp_dashboard_metrics():
     """
@@ -106,81 +82,51 @@ def ejecutar_sp_dashboard_metrics():
 
 def ejecutar_procedimiento_almacenado(proc_name, params=None):
     """
-    Ejecuta un procedimiento almacenado de forma SEGURA usando EXEC con placeholders.
-
-    FIX DE SEGURIDAD: Esta función ahora usa placeholders (%s) con parámetros separados
-    en lugar de concatenación de strings para prevenir SQL injection.
-
+    Ejecuta un procedimiento almacenado y devuelve los resultados
+    
     Args:
         proc_name (str): Nombre del procedimiento almacenado
         params (list): Lista de parámetros para el procedimiento
-
+    
     Returns:
         list: Lista de diccionarios con los resultados
-
-    Raises:
-        ValueError: Si el procedimiento no está en la whitelist
     """
-    # SEGURIDAD: Validar que el SP está en la whitelist
-    if proc_name not in ALLOWED_STORED_PROCEDURES:
-        error_msg = f"Procedimiento no permitido: {proc_name}"
-        logger.error(error_msg)
-        raise ValueError(error_msg)
-
     try:
         with connection.cursor() as cursor:
+            # Construir la llamada al procedimiento
             if params:
-                # Convertir fechas string a formato ISO (YYYY-MM-DD) para SQL Server
-                converted_params = []
+                # Convertir parámetros según el tipo
+                formatted_params = []
                 for param in params:
-                    if isinstance(param, str):
-                        # Intentar detectar y normalizar formatos de fecha comunes
-                        try:
-                            # Formato YYYY/MM/DD -> convertir a YYYY-MM-DD (ISO)
-                            if '/' in param and len(param) == 10:
-                                dt = datetime.strptime(param, '%Y/%m/%d')
-                                # Convertir a formato ISO que SQL Server siempre acepta
-                                converted_params.append(dt.strftime('%Y-%m-%d'))
-                            # Formato YYYY-MM-DD -> ya está en ISO, mantener
-                            elif '-' in param and len(param) == 10:
-                                # Validar que es fecha válida
-                                dt = datetime.strptime(param, '%Y-%m-%d')
-                                converted_params.append(param)  # Ya está en formato correcto
-                            else:
-                                # No es fecha, mantener como string
-                                converted_params.append(param)
-                        except ValueError:
-                            # No se pudo parsear como fecha, mantener original
-                            converted_params.append(param)
+                    if isinstance(param, str) and param != '':
+                        formatted_params.append(f"'{param}'")
+                    elif param == '':
+                        formatted_params.append("''")
+                    elif param is None:
+                        formatted_params.append("NULL")
                     else:
-                        # No es string, mantener original
-                        converted_params.append(param)
-
-                # SEGURIDAD: Crear placeholders para cada parámetro
-                placeholders = ', '.join(['%s'] * len(converted_params))
-                sql = f"EXEC {proc_name} {placeholders}"  # Solo estructura, sin valores
-
-                logger.info(f"Ejecutando: {sql} con {len(converted_params)} parámetros")
-                cursor.execute(sql, converted_params)  # ✅ SEGURO - parámetros separados
+                        formatted_params.append(str(param))
+                
+                params_str = ', '.join(formatted_params)
+                sql = f"EXEC {proc_name} {params_str}"
+                logger.info(f"Ejecutando: {sql}")
+                cursor.execute(sql)
             else:
                 sql = f"EXEC {proc_name}"
                 logger.info(f"Ejecutando: {sql}")
                 cursor.execute(sql)
-
+            
             # Obtener nombres de columnas
             columns = [col[0] for col in cursor.description] if cursor.description else []
-
+            
             # Obtener resultados
             results = []
             for row in cursor.fetchall():
                 results.append(dict(zip(columns, row)))
-
+            
             logger.info(f"Procedimiento {proc_name} ejecutado exitosamente. {len(results)} registros obtenidos.")
             return results
-
-    except ValueError:
-        # Re-lanzar ValueError para que se propague
-        raise
+            
     except Exception as e:
         logger.error(f"Error ejecutando procedimiento {proc_name}: {e}")
         return []

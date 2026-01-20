@@ -193,13 +193,13 @@ class AuditLog(models.Model):
     
     # Información adicional
     affected_user = models.ForeignKey(
-        User, 
-        on_delete=models.SET_NULL, 
-        null=True, 
-        blank=True, 
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name='audit_logs_affected'
     )
-    metadata = models.JSONField(default=dict, blank=True)
+    metadata = models.TextField(blank=True)
     
     class Meta:
         verbose_name = "Log de Auditoría"

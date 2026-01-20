@@ -31,6 +31,22 @@
 .backup-item.success { border-left-color: #50cd89; }
 .backup-item.warning { border-left-color: #ffc700; }
 .backup-item.danger { border-left-color: #f1416c; }
+
+/* Estilos para gráficos */
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin-bottom: 20px;
+}
+.chart-small {
+    height: 250px !important;
+}
+.chart-medium {
+    height: 350px !important;
+}
+.chart-large {
+    height: 400px !important;
+}
 </style>
 {% endblock %}
 
@@ -60,7 +76,7 @@
                         <span class="path2"></span>
                     </i>
                 </div>
-                <div class="fs-2hx fw-bold text-dark mb-2 mt-5">
+                <div class="fs-2hx fw-bold text-dark mb-2 mt-5" id="metric-servidores">
                     {{ chart_data.servidores|default:0 }}
                 </div>
                 <div class="fs-7 fw-semibold text-gray-400 text-center">Servidores Monitoreados</div>
@@ -80,7 +96,7 @@
                         <span class="path3"></span>
                     </i>
                 </div>
-                <div class="fs-2hx fw-bold text-dark mb-2 mt-5">
+                <div class="fs-2hx fw-bold text-dark mb-2 mt-5" id="metric-bases-datos">
                     {{ chart_data.bases_datos|default:0 }}
                 </div>
                 <div class="fs-7 fw-semibold text-gray-400 text-center">Bases de Datos</div>
@@ -99,7 +115,7 @@
                         <span class="path2"></span>
                     </i>
                 </div>
-                <div class="fs-2hx fw-bold text-dark mb-2 mt-5">
+                <div class="fs-2hx fw-bold text-dark mb-2 mt-5" id="metric-backups-hoy">
                     {{ chart_data.backups_hoy|default:0 }}
                 </div>
                 <div class="fs-7 fw-semibold text-gray-400 text-center">Backups Hoy</div>
@@ -118,7 +134,7 @@
                         <span class="path2"></span>
                     </i>
                 </div>
-                <div class="fs-2hx fw-bold text-dark mb-2 mt-5">
+                <div class="fs-2hx fw-bold text-dark mb-2 mt-5" id="metric-backups-semana">
                     {{ chart_data.backups_semana|default:0 }}
                 </div>
                 <div class="fs-7 fw-semibold text-gray-400 text-center">Backups esta Semana</div>
@@ -128,68 +144,113 @@
     </div>
 </div>
 
-<!-- Estadísticas de Jobs y Últimos Backups -->
+<!-- Sección de Gráficos -->
 <div class="row g-5 g-xl-10 mb-5 mb-xl-10">
-    <!-- Estadísticas de Jobs -->
-    <div class="col-xl-6">
+    <!-- Gráfico de Estado de Jobs -->
+    <div class="col-xl-4">
         <div class="card card-xl-stretch mb-xl-8">
             <div class="card-header border-0 pt-5">
                 <h3 class="card-title align-items-start flex-column">
-                    <span class="card-label fw-bold fs-3 mb-1">Estado de Jobs de Backup</span>
-                    <span class="text-muted fw-semibold fs-7">Resultados de la última semana</span>
+                    <span class="card-label fw-bold fs-3 mb-1">Estado de Jobs</span>
+                    <span class="text-muted fw-semibold fs-7">Distribución de resultados</span>
                 </h3>
                 <div class="card-toolbar">
-                    <a href="{% url 'reportes:jobs_backup' %}" class="btn btn-sm btn-light-primary">
-                        <i class="ki-duotone ki-eye fs-4 me-1">
+                    <button class="btn btn-sm btn-icon btn-light-primary" id="refresh-jobs-chart">
+                        <i class="ki-duotone ki-arrows-circle fs-4">
                             <span class="path1"></span>
                             <span class="path2"></span>
-                            <span class="path3"></span>
                         </i>
-                        Ver Detalle
-                    </a>
+                    </button>
                 </div>
             </div>
-            
             <div class="card-body pt-5">
-                {% if stats_jobs %}
-                    {% for stat in stats_jobs %}
-                        <div class="d-flex align-items-center mb-7">
-                            <div class="symbol symbol-50px me-5">
-                                <span class="symbol-label bg-light-{% if 'Exitoso' in stat.RESULTADO or 'exitoso' in stat.RESULTADO %}success{% elif 'Fallido' in stat.RESULTADO or 'fallido' in stat.RESULTADO or 'Error' in stat.RESULTADO %}danger{% else %}warning{% endif %}">
-                                    <i class="ki-duotone ki-{% if 'Exitoso' in stat.RESULTADO or 'exitoso' in stat.RESULTADO %}check-circle{% elif 'Fallido' in stat.RESULTADO or 'fallido' in stat.RESULTADO or 'Error' in stat.RESULTADO %}cross-circle{% else %}information{% endif %} fs-2x text-{% if 'Exitoso' in stat.RESULTADO or 'exitoso' in stat.RESULTADO %}success{% elif 'Fallido' in stat.RESULTADO or 'fallido' in stat.RESULTADO or 'Error' in stat.RESULTADO %}danger{% else %}warning{% endif %}">
-                                        <span class="path1"></span>
-                                        <span class="path2"></span>
-                                    </i>
-                                </span>
-                            </div>
-                            
-                            <div class="flex-grow-1">
-                                <div class="text-dark fw-bold text-hover-primary fs-6">{{ stat.RESULTADO }}</div>
-                                <span class="text-muted fw-semibold d-block fs-7">
-                                    {% if stat.porcentaje %}{{ stat.porcentaje }}% del total{% else %}Estado de jobs{% endif %}
-                                </span>
-                            </div>
-                            
-                            <span class="text-dark fw-bold fs-4">{{ stat.cantidad }}</span>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="text-center py-10">
-                        <i class="ki-duotone ki-information-2 fs-5tx text-muted mb-5">
+                <div class="chart-container chart-small">
+                    <canvas id="jobsStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Gráfico de Tipos de Backup -->
+    <div class="col-xl-4">
+        <div class="card card-xl-stretch mb-xl-8">
+            <div class="card-header border-0 pt-5">
+                <h3 class="card-title align-items-start flex-column">
+                    <span class="card-label fw-bold fs-3 mb-1">Tipos de Backup</span>
+                    <span class="text-muted fw-semibold fs-7">Distribución por tipo</span>
+                </h3>
+                <div class="card-toolbar">
+                    <button class="btn btn-sm btn-icon btn-light-success" id="refresh-types-chart">
+                        <i class="ki-duotone ki-arrows-circle fs-4">
                             <span class="path1"></span>
                             <span class="path2"></span>
-                            <span class="path3"></span>
                         </i>
-                        <div class="fs-6 fw-semibold text-gray-400">No hay datos de jobs disponibles</div>
-                        <div class="fs-7 text-muted mt-2">Los jobs aparecerán aquí cuando se ejecuten</div>
-                    </div>
-                {% endif %}
+                    </button>
+                </div>
+            </div>
+            <div class="card-body pt-5">
+                <div class="chart-container chart-small">
+                    <canvas id="backupTypesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Gráfico de Tendencia Semanal -->
+    <div class="col-xl-4">
+        <div class="card card-xl-stretch mb-xl-8">
+            <div class="card-header border-0 pt-5">
+                <h3 class="card-title align-items-start flex-column">
+                    <span class="card-label fw-bold fs-3 mb-1">Tendencia Semanal</span>
+                    <span class="text-muted fw-semibold fs-7">Backups por día</span>
+                </h3>
+                <div class="card-toolbar">
+                    <button class="btn btn-sm btn-icon btn-light-info" id="refresh-trend-chart">
+                        <i class="ki-duotone ki-arrows-circle fs-4">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body pt-5">
+                <div class="chart-container chart-small">
+                    <canvas id="weeklyTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráficos adicionales -->
+<div class="row g-5 g-xl-10 mb-5 mb-xl-10">
+    <!-- Top Servidores -->
+    <div class="col-xl-8">
+        <div class="card card-xl-stretch mb-xl-8">
+            <div class="card-header border-0 pt-5">
+                <h3 class="card-title align-items-start flex-column">
+                    <span class="card-label fw-bold fs-3 mb-1">Top Servidores por Backups</span>
+                    <span class="text-muted fw-semibold fs-7">Últimos 30 días</span>
+                </h3>
+                <div class="card-toolbar">
+                    <button class="btn btn-sm btn-icon btn-light-warning" id="refresh-servers-chart">
+                        <i class="ki-duotone ki-arrows-circle fs-4">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body pt-5">
+                <div class="chart-container chart-medium">
+                    <canvas id="topServersChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
     
     <!-- Últimos Backups -->
-    <div class="col-xl-6">
+    <div class="col-xl-4">
         <div class="card card-xl-stretch mb-xl-8">
             <div class="card-header border-0 pt-5">
                 <h3 class="card-title align-items-start flex-column">
@@ -384,7 +445,275 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
+// Variables globales para los gráficos
+let jobsStatusChart, backupTypesChart, weeklyTrendChart, topServersChart;
+
+// Datos de los gráficos (pasados desde Django)
+const chartData = {
+    jobs_stats: {{ chart_data.jobs_stats|safe }},
+    backup_types: {{ chart_data.backup_types|safe }},
+    weekly_trend: {{ chart_data.weekly_trend|safe }},
+    top_servers: {{ chart_data.top_servers|safe }}
+};
+
+// Colores del tema
+const colors = {
+    primary: '#009ef7',
+    success: '#50cd89', 
+    info: '#7239ea',
+    warning: '#ffc700',
+    danger: '#f1416c',
+    dark: '#181c32',
+    muted: '#a1a5b7'
+};
+
+// Configuración de Chart.js
+Chart.defaults.font.family = 'Inter, Helvetica, "sans-serif"';
+Chart.defaults.font.size = 13;
+Chart.defaults.color = colors.muted;
+
+// Inicializar gráficos
+function initCharts() {
+    initJobsStatusChart();
+    initBackupTypesChart();
+    initWeeklyTrendChart();
+    initTopServersChart();
+}
+
+// Gráfico de Estado de Jobs (Dona)
+function initJobsStatusChart() {
+    const ctx = document.getElementById('jobsStatusChart');
+    if (!ctx) return;
+
+    const data = chartData.jobs_stats || [
+        { label: 'Exitosos', value: 0 },
+        { label: 'Fallidos', value: 0 }
+    ];
+
+    jobsStatusChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: data.map(item => item.label),
+            datasets: [{
+                data: data.map(item => item.value),
+                backgroundColor: [colors.success, colors.danger, colors.warning],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((context.parsed * 100) / total).toFixed(1);
+                            return `${context.label}: ${context.parsed} (${percentage}%)`;
+                        }
+                    }
+                }
+            },
+            cutout: '60%'
+        }
+    });
+}
+
+// Gráfico de Tipos de Backup (Polar Area)
+function initBackupTypesChart() {
+    const ctx = document.getElementById('backupTypesChart');
+    if (!ctx) return;
+
+    const data = chartData.backup_types || [
+        { label: 'FULL', value: 0 },
+        { label: 'INCREMENTAL', value: 0 },
+        { label: 'DIFF', value: 0 },
+        { label: 'LOG', value: 0 }
+    ];
+
+    backupTypesChart = new Chart(ctx, {
+        type: 'polarArea',
+        data: {
+            labels: data.map(item => item.label),
+            datasets: [{
+                data: data.map(item => item.value),
+                backgroundColor: [
+                    colors.primary + '80',
+                    colors.success + '80', 
+                    colors.warning + '80',
+                    colors.info + '80'
+                ],
+                borderColor: [colors.primary, colors.success, colors.warning, colors.info],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 15,
+                        usePointStyle: true
+                    }
+                }
+            },
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    ticks: {
+                        display: false
+                    },
+                    grid: {
+                        color: colors.muted + '20'
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Gráfico de Tendencia Semanal (Línea)
+function initWeeklyTrendChart() {
+    const ctx = document.getElementById('weeklyTrendChart');
+    if (!ctx) return;
+
+    const data = chartData.weekly_trend || [
+        { day: 'Lun', backups: 0 },
+        { day: 'Mar', backups: 0 },
+        { day: 'Mié', backups: 0 },
+        { day: 'Jue', backups: 0 },
+        { day: 'Vie', backups: 0 },
+        { day: 'Sáb', backups: 0 },
+        { day: 'Dom', backups: 0 }
+    ];
+
+    weeklyTrendChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.map(item => item.day),
+            datasets: [{
+                label: 'Backups',
+                data: data.map(item => item.backups),
+                borderColor: colors.info,
+                backgroundColor: colors.info + '20',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: colors.info,
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 6,
+                pointHoverRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: colors.muted + '20'
+                    },
+                    ticks: {
+                        precision: 0
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            },
+            interaction: {
+                intersect: false
+            }
+        }
+    });
+}
+
+// Gráfico de Top Servidores (Barras Horizontales)
+function initTopServersChart() {
+    const ctx = document.getElementById('topServersChart');
+    if (!ctx) return;
+
+    const data = chartData.top_servers || [
+        { server: 'Sin datos', backups: 0 }
+    ];
+
+    topServersChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: data.map(item => item.server),
+            datasets: [{
+                label: 'Backups',
+                data: data.map(item => item.backups),
+                backgroundColor: colors.primary + '80',
+                borderColor: colors.primary,
+                borderWidth: 1,
+                borderRadius: 4,
+                borderSkipped: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    grid: {
+                        color: colors.muted + '20'
+                    },
+                    ticks: {
+                        precision: 0
+                    }
+                },
+                y: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        maxTicksLimit: 10
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Actualizar datos de gráficos
+function updateChartData(chartInstance, newData) {
+    if (!chartInstance) return;
+    
+    chartInstance.data.datasets[0].data = newData;
+    chartInstance.update('active');
+}
+
 // Actualización automática de métricas cada 5 minutos
 let refreshInterval;
 
@@ -394,7 +723,6 @@ function refreshMetrics() {
         .then(data => {
             if (data.success) {
                 console.log('Métricas actualizadas:', data.data);
-                // Actualizar elementos específicos del DOM
                 updateMetricsDisplay(data.data);
                 showToast('Métricas actualizadas exitosamente', 'success');
             } else {
@@ -409,30 +737,22 @@ function refreshMetrics() {
 }
 
 function updateMetricsDisplay(data) {
-    // Actualizar métricas si existen elementos en el DOM
+    // Actualizar métricas numéricas
     if (data.total_servidores !== undefined) {
-        const servidoresElement = document.querySelector('.metric-card:nth-child(1) .fs-2hx');
-        if (servidoresElement) servidoresElement.textContent = data.total_servidores;
+        document.getElementById('metric-servidores').textContent = data.total_servidores;
     }
-    
     if (data.total_bases_datos !== undefined) {
-        const basesElement = document.querySelector('.metric-card:nth-child(2) .fs-2hx');
-        if (basesElement) basesElement.textContent = data.total_bases_datos;
+        document.getElementById('metric-bases-datos').textContent = data.total_bases_datos;
     }
-    
     if (data.backups_hoy !== undefined) {
-        const backupsHoyElement = document.querySelector('.metric-card:nth-child(3) .fs-2hx');
-        if (backupsHoyElement) backupsHoyElement.textContent = data.backups_hoy;
+        document.getElementById('metric-backups-hoy').textContent = data.backups_hoy;
     }
-    
     if (data.backups_semana !== undefined) {
-        const backupsSemanaElement = document.querySelector('.metric-card:nth-child(4) .fs-2hx');
-        if (backupsSemanaElement) backupsSemanaElement.textContent = data.backups_semana;
+        document.getElementById('metric-backups-semana').textContent = data.backups_semana;
     }
 }
 
 function showToast(message, type = 'info') {
-    // Crear toast notification simple
     const toast = document.createElement('div');
     toast.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
     toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
@@ -443,7 +763,6 @@ function showToast(message, type = 'info') {
     
     document.body.appendChild(toast);
     
-    // Auto-remove after 3 seconds
     setTimeout(() => {
         if (toast.parentNode) {
             toast.parentNode.removeChild(toast);
@@ -451,13 +770,33 @@ function showToast(message, type = 'info') {
     }, 3000);
 }
 
+// Inicialización
 document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar tooltips si están disponibles
-    if (typeof KTApp !== 'undefined') {
-        KTApp.init();
-    }
+    // Inicializar gráficos
+    initCharts();
     
-    // Configurar botón de actualización manual
+    // Configurar botones de actualización individual
+    document.getElementById('refresh-jobs-chart')?.addEventListener('click', () => {
+        console.log('Actualizando gráfico de jobs...');
+        // Aquí puedes agregar lógica para actualizar solo este gráfico
+    });
+    
+    document.getElementById('refresh-types-chart')?.addEventListener('click', () => {
+        console.log('Actualizando gráfico de tipos...');
+        // Aquí puedes agregar lógica para actualizar solo este gráfico
+    });
+    
+    document.getElementById('refresh-trend-chart')?.addEventListener('click', () => {
+        console.log('Actualizando gráfico de tendencia...');
+        // Aquí puedes agregar lógica para actualizar solo este gráfico
+    });
+    
+    document.getElementById('refresh-servers-chart')?.addEventListener('click', () => {
+        console.log('Actualizando gráfico de servidores...');
+        // Aquí puedes agregar lógica para actualizar solo este gráfico
+    });
+    
+    // Configurar botón de actualización general
     const refreshButton = document.getElementById('refresh-metrics');
     if (refreshButton) {
         refreshButton.addEventListener('click', function() {
@@ -473,10 +812,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Configurar auto-refresh cada 5 minutos
-    refreshInterval = setInterval(refreshMetrics, 300000); // 5 minutos
+    // Auto-refresh cada 5 minutos
+    refreshInterval = setInterval(refreshMetrics, 300000);
     
-    // Limpiar interval al salir de la página
+    // Limpiar interval al salir
     window.addEventListener('beforeunload', function() {
         if (refreshInterval) {
             clearInterval(refreshInterval);

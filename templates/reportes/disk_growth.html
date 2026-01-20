@@ -531,22 +531,23 @@ function setupDiskGrowthExportButtons() {
 
 function exportDiskGrowthToExcel() {
     const params = new URLSearchParams(window.location.search);
-    const url = `{% url 'reportes:disk_growth' %}?format=excel&${params.toString()}`;
-    window.open(url, '_blank');
-    showNotification('Funcionalidad de Excel en desarrollo', 'info');
+    const url = `{% url 'reportes:export_disk_growth_excel' %}?${params.toString()}`;
+    showNotification('Generando Excel con formato profesional...', 'info');
+    window.location.href = url;
 }
 
 function exportDiskGrowthToPDF() {
-    showNotification('Funcionalidad de PDF en desarrollo', 'info');
+    const params = new URLSearchParams(window.location.search);
+    const url = `{% url 'reportes:export_disk_growth_pdf' %}?${params.toString()}`;
+    showNotification('Generando PDF de crecimiento de discos...', 'success');
+    window.location.href = url;
 }
 
 function exportDiskGrowthToCSV() {
-    const table = document.getElementById('diskGrowthTable');
-    if (table) {
-        const csv = tableToCSV(table);
-        downloadCSV(csv, 'disk_growth_report.csv');
-        showNotification('Exportando a CSV...', 'success');
-    }
+    const params = new URLSearchParams(window.location.search);
+    const url = `{% url 'reportes:export_disk_growth_csv' %}?${params.toString()}`;
+    showNotification('Generando CSV...', 'info');
+    window.location.href = url;
 }
 
 function ejecutarMonitorSP() {

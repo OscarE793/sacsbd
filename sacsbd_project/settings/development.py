@@ -20,8 +20,8 @@ DATABASES = {
         "ENGINE": "mssql",
         "NAME": "sacs_bd",
         "USER": "oejaramillop1",
-        "PASSWORD": "Partmoa588**",
-        "HOST": "DESKTOP-7GB1M4M\\SACSBD24",  # Con instancia
+        "PASSWORD": "O2c4r793@J4r4#2062*",
+        "HOST": "DESKTOP-7GB1M4M\SACSBD24",  # Con instancia
         "PORT": "",  # Puerto vacío
         "OPTIONS": {
             "driver": "ODBC Driver 17 for SQL Server",

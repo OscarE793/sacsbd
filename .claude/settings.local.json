@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(findstr:*)",
+      "Bash(mkdir:*)",
+      "Bash(dotnet new:*)",
+      "Bash(dotnet add reference:*)",
+      "Bash(dotnet add:*)",
+      "Bash(dotnet add package:*)",
+      "Bash(del POC-SACSBD-DotNetSACSBD.DomainClass1.cs)",
+      "Bash(del POC-SACSBD-DotNetSACSBD.ApplicationClass1.cs)",
+      "Bash(del POC-SACSBD-DotNetSACSBD.InfrastructureClass1.cs)",
+      "Bash(rm:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

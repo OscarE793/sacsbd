@@ -26,6 +26,9 @@ urlpatterns = [
     # Auditoría
     path('auditoria/', views.audit_logs, name='audit_logs'),
     
+    # Reportes
+    path('reportes/estado-bases-datos/', views.database_status_report, name='database_status_report'),
+    
     # Compatibilidad con URLs antiguas
     path('create/', views.user_create, name='create_old'),
     path('<int:pk>/', views.user_detail, name='detail_old'),

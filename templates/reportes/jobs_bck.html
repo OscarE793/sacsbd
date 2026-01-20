@@ -354,21 +354,23 @@ function setupJobsExportButtons() {
 
 function exportJobsToExcel() {
     const params = new URLSearchParams(window.location.search);
-    const url = `{% url 'reportes:jobs_backup' %}?format=excel&${params.toString()}`;
-    window.open(url, '_blank');
+    const url = `{% url 'reportes:export_jobs_excel' %}?${params.toString()}`;
+    showNotification('Generando Excel con formato profesional...', 'info');
+    window.location.href = url;
 }
 
 function exportJobsToPDF() {
-    showNotification('Funcionalidad de PDF en desarrollo', 'info');
+    const params = new URLSearchParams(window.location.search);
+    const url = `{% url 'reportes:export_jobs_pdf' %}?${params.toString()}`;
+    showNotification('Generando PDF de jobs...', 'success');
+    window.location.href = url;
 }
 
 function exportJobsToCSV() {
-    // Exportar tabla actual a CSV
-    const table = document.getElementById('jobs-table');
-    if (table) {
-        const csv = tableToCSV(table);
-        downloadCSV(csv, 'jobs_backup.csv');
-    }
+    const params = new URLSearchParams(window.location.search);
+    const url = `{% url 'reportes:export_jobs_csv' %}?${params.toString()}`;
+    showNotification('Generando CSV...', 'info');
+    window.location.href = url;
 }
 
 function refreshJobsData() {
