@@ -34,7 +34,7 @@ DATABASES_CONFIG_2 = {
         "ENGINE": "mssql",
         "NAME": os.getenv('DB_NAME', 'sacs_bd'),
         "USER": os.getenv('DB_USER', 'oejaramillop'),
-        "PASSWORD": os.getenv('DB_PASSWORD', 'O2c4r793@J4r4#2062*'),
+        "PASSWORD": os.getenv('DB_PASSWORD', 'O2c4r793@J4r4#2065*'),
         "HOST": "localhost",
         "PORT": "1433",
         "OPTIONS": {

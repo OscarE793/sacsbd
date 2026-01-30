@@ -18,7 +18,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self.stdout.write(
-            self.style.SUCCESS('🚀 Iniciando carga de datos iniciales para Horas Extras...')
+            self.style.SUCCESS('[INICIO] Iniciando carga de datos iniciales para Horas Extras...')
         )
         
         try:
@@ -30,26 +30,26 @@ class Command(BaseCommand):
                 
             self.stdout.write('')
             self.stdout.write(
-                self.style.SUCCESS('✅ ¡Datos iniciales cargados exitosamente!')
+                self.style.SUCCESS('[OK]  Datos iniciales cargados exitosamente!')
             )
             self.stdout.write(
-                self.style.SUCCESS('📋 El sistema está listo para usar con la nueva legislación colombiana')
+                self.style.SUCCESS('[INFO] El sistema está listo para usar con la nueva legislación colombiana')
             )
             
         except Exception as e:
             self.stdout.write(
-                self.style.ERROR(f'❌ Error al cargar datos: {str(e)}')
+                self.style.ERROR(f'[ERROR] Error al cargar datos: {str(e)}')
             )
             raise
 
     def crear_tipos_turno(self, force=False):
         """Crea los tipos de turno según los horarios de la imagen"""
         
-        self.stdout.write('📅 Creando tipos de turno...')
+        self.stdout.write('[TURNO] Creando tipos de turno...')
         
         if force:
             TipoTurno.objects.all().delete()
-            self.stdout.write('  🗑️  Datos existentes eliminados')
+            self.stdout.write('     Datos existentes eliminados')
         
         # === TURNO MAÑANA ===
         turno_manana, created = TipoTurno.objects.get_or_create(
@@ -245,16 +245,16 @@ class Command(BaseCommand):
         )
         
         total_turnos = TipoTurno.objects.count()
-        self.stdout.write(f'  ✅ {total_turnos} tipos de turno configurados')
+        self.stdout.write(f'  [OK] {total_turnos} tipos de turno configurados')
         
         # Mostrar resumen de turnos
         for turno in TipoTurno.objects.all():
-            self.stdout.write(f'     📋 {turno.codigo} - {turno.descripcion}')
+            self.stdout.write(f'     [INFO] {turno.codigo} - {turno.descripcion}')
 
     def crear_dias_festivos_2024(self, force=False):
         """Crea los días festivos de Colombia para 2024"""
         
-        self.stdout.write('🎉 Creando días festivos 2024...')
+        self.stdout.write('[FESTIVO] Creando días festivos 2024...')
         
         if force:
             DiaFestivo.objects.filter(fecha__year=2024).delete()
@@ -301,12 +301,12 @@ class Command(BaseCommand):
                 festivos_creados += 1
         
         festivos_2024_total = DiaFestivo.objects.filter(fecha__year=2024).count()
-        self.stdout.write(f'  ✅ {festivos_creados} nuevos festivos 2024 ({festivos_2024_total} total)')
+        self.stdout.write(f'  [OK] {festivos_creados} nuevos festivos 2024 ({festivos_2024_total} total)')
 
     def crear_dias_festivos_2025(self, force=False):
         """Crea los días festivos de Colombia para 2025"""
         
-        self.stdout.write('🎉 Creando días festivos 2025...')
+        self.stdout.write('[FESTIVO] Creando días festivos 2025...')
         
         if force:
             DiaFestivo.objects.filter(fecha__year=2025).delete()
@@ -353,16 +353,16 @@ class Command(BaseCommand):
                 festivos_creados += 1
         
         festivos_2025_total = DiaFestivo.objects.filter(fecha__year=2025).count()
-        self.stdout.write(f'  ✅ {festivos_creados} nuevos festivos 2025 ({festivos_2025_total} total)')
+        self.stdout.write(f'  [OK] {festivos_creados} nuevos festivos 2025 ({festivos_2025_total} total)')
 
     def crear_empleados_ejemplo(self, force=False):
         """Crea los empleados del centro de cómputo según el archivo Excel"""
         
-        self.stdout.write('👥 Creando empleados del centro de cómputo...')
+        self.stdout.write('[EMPLEADO] Creando empleados del centro de cómputo...')
         
         if force:
             Empleado.objects.all().delete()
-            self.stdout.write('  🗑️  Empleados existentes eliminados')
+            self.stdout.write('     Empleados existentes eliminados')
         
         empleados_data = [
             {
@@ -433,7 +433,7 @@ class Command(BaseCommand):
                 # Calcular valor hora automáticamente
                 empleado.calcular_valor_hora()
                 empleado.save()
-                self.stdout.write(f'     👤 {empleado.nombres} {empleado.apellidos} - ${empleado.valor_hora:,.0f}/hora')
+                self.stdout.write(f'       {empleado.nombres} {empleado.apellidos} - ${empleado.valor_hora:,.0f}/hora')
         
         total_empleados = Empleado.objects.count()
-        self.stdout.write(f'  ✅ {empleados_creados} nuevos empleados ({total_empleados} total)')
+        self.stdout.write(f'  [OK] {empleados_creados} nuevos empleados ({total_empleados} total)')

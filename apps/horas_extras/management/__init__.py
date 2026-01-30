@@ -1,1 +1,1 @@
-# management package
+# Empty init file for management package

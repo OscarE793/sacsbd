@@ -1,94 +1,20 @@
-# apps/horas_extras/admin.py
+# apps/horas_extras/admin.py - VERSIÓN SIMPLIFICADA
 from django.contrib import admin
 from django.utils.html import format_html
-from django.urls import reverse
 from django.utils.safestring import mark_safe
-from django.db.models import Sum, Count
-from decimal import Decimal
-import calendar
-from .models import (
-    Empleado, TipoTurno, DiaFestivo, RegistroTurno, 
-    CalculoRecargo, ResumenMensual
-)
-
-
-@admin.register(Empleado)
-class EmpleadoAdmin(admin.ModelAdmin):
-    list_display = [
-        'numero_empleado', 'nombre_completo', 'cedula', 
-        'cargo_display', 'valor_hora_formateado', 'estado', 
-        'fecha_ingreso'
-    ]
-    list_filter = ['cargo', 'estado', 'fecha_ingreso']
-    search_fields = ['nombres', 'apellidos', 'cedula', 'numero_empleado']
-    readonly_fields = ['valor_hora', 'created_at', 'updated_at']
-    
-    fieldsets = [
-        ('Información Personal', {
-            'fields': [
-                ('numero_empleado', 'cedula'),
-                ('nombres', 'apellidos'),
-                ('telefono', 'email'),
-                'direccion'
-            ]
-        }),
-        ('Información Laboral', {
-            'fields': [
-                ('cargo', 'estado'),
-                'fecha_ingreso',
-                ('salario_base', 'horas_mensuales'),
-                'valor_hora',
-            ]
-        }),
-        ('Sistema', {
-            'fields': ['user', 'created_at', 'updated_at'],
-            'classes': ['collapse']
-        })
-    ]
-    
-    def nombre_completo(self, obj):
-        return f"{obj.nombres} {obj.apellidos}"
-    nombre_completo.short_description = 'Nombre Completo'
-    
-    def cargo_display(self, obj):
-        colores = {
-            'operador_junior': '#3498db',
-            'operador_senior': '#2ecc71', 
-            'coordinador': '#f39c12',
-            'supervisor': '#e74c3c'
-        }
-        color = colores.get(obj.cargo, '#95a5a6')
-        return format_html(
-            '<span style="color: {}; font-weight: bold;">{}</span>',
-            color,
-            obj.get_cargo_display()
-        )
-    cargo_display.short_description = 'Cargo'
-    
-    def valor_hora_formateado(self, obj):
-        if obj.valor_hora:
-            return format_html(
-                '<strong>${:,.0f}</strong>',
-                obj.valor_hora
-            )
-        return '-'
-    valor_hora_formateado.short_description = 'Valor/Hora'
-    
-    def save_model(self, request, obj, form, change):
-        # Calcular valor hora automáticamente
-        obj.calcular_valor_hora()
-        super().save_model(request, obj, form, change)
+from .models import TipoTurno, DiaFestivo, RegistroTurno, ResumenMensual
+from .models_normativo import ParametroNormativo, PoliticaEmpresa
 
 
 @admin.register(TipoTurno)
 class TipoTurnoAdmin(admin.ModelAdmin):
     list_display = [
-        'codigo', 'nombre_display', 'descripcion', 
+        'codigo', 'nombre_display', 'descripcion',
         'es_nocturno_display', 'horarios_resumen', 'activo'
     ]
     list_filter = ['es_nocturno', 'activo']
     search_fields = ['nombre', 'descripcion', 'codigo']
-    
+
     fieldsets = [
         ('Información General', {
             'fields': [
@@ -115,17 +41,17 @@ class TipoTurnoAdmin(admin.ModelAdmin):
             'description': 'Horarios para fines de semana y lunes con jornada de 8 horas'
         })
     ]
-    
+
     def nombre_display(self, obj):
         return obj.get_nombre_display()
     nombre_display.short_description = 'Turno'
-    
+
     def es_nocturno_display(self, obj):
         if obj.es_nocturno:
             return format_html('<span style="color: #2c3e50;">🌙 Nocturno</span>')
         return format_html('<span style="color: #f39c12;">☀️ Diurno</span>')
     es_nocturno_display.short_description = 'Tipo'
-    
+
     def horarios_resumen(self, obj):
         html = []
         dias = [
@@ -137,7 +63,7 @@ class TipoTurnoAdmin(admin.ModelAdmin):
             ('S', obj.hora_inicio_sabado, obj.hora_fin_sabado, obj.horas_sabado),
             ('D', obj.hora_inicio_domingo, obj.hora_fin_domingo, obj.horas_domingo),
         ]
-        
+
         for dia, inicio, fin, horas in dias:
             if inicio and fin:
                 color = '#e74c3c' if horas == 8 else '#3498db'
@@ -145,7 +71,7 @@ class TipoTurnoAdmin(admin.ModelAdmin):
                     f'<span style="color: {color}; font-size: 11px;">'
                     f'{dia}: {inicio.strftime("%H:%M")}-{fin.strftime("%H:%M")} ({horas}h)</span>'
                 )
-        
+
         return mark_safe('<br>'.join(html)) if html else 'Sin horarios'
     horarios_resumen.short_description = 'Horarios por Día'
 
@@ -153,13 +79,13 @@ class TipoTurnoAdmin(admin.ModelAdmin):
 @admin.register(DiaFestivo)
 class DiaFestivoAdmin(admin.ModelAdmin):
     list_display = [
-        'fecha', 'nombre', 'tipo_display', 'es_nacional', 
+        'fecha', 'nombre', 'tipo_display', 'es_nacional',
         'activo', 'dia_semana'
     ]
-    list_filter = ['tipo', 'es_nacional', 'activo', 'fecha__year']
+    list_filter = ['tipo', 'es_nacional', 'activo']
     search_fields = ['nombre', 'observaciones']
     date_hierarchy = 'fecha'
-    
+
     fieldsets = [
         ('Información del Festivo', {
             'fields': [
@@ -170,7 +96,7 @@ class DiaFestivoAdmin(admin.ModelAdmin):
             ]
         })
     ]
-    
+
     def tipo_display(self, obj):
         colores = {
             'fijo': '#2ecc71',
@@ -185,74 +111,36 @@ class DiaFestivoAdmin(admin.ModelAdmin):
             obj.get_tipo_display()
         )
     tipo_display.short_description = 'Tipo'
-    
+
     def dia_semana(self, obj):
         dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
         return dias[obj.fecha.weekday()]
     dia_semana.short_description = 'Día'
 
 
-class CalculoRecargoInline(admin.StackedInline):
-    model = CalculoRecargo
-    extra = 0
-    readonly_fields = [
-        'valor_hora_base', 'total_ordinario', 'total_recargos', 
-        'total_horas_extras', 'total_a_pagar', 'fecha_calculo'
-    ]
-    
-    fieldsets = [
-        ('Cálculos de Recargos', {
-            'fields': [
-                ('valor_hora_base', 'horas_ordinarias'),
-                ('horas_recargo_nocturno', 'valor_recargo_nocturno'),
-                ('horas_recargo_dominical', 'valor_recargo_dominical'),
-                ('horas_recargo_festivo', 'valor_recargo_festivo'),
-                ('horas_recargo_nocturno_festivo', 'valor_recargo_nocturno_festivo'),
-            ]
-        }),
-        ('Horas Extras', {
-            'fields': [
-                ('horas_extras_diurnas_ordinarias', 'valor_horas_extras_diurnas_ordinarias'),
-                ('horas_extras_nocturnas_ordinarias', 'valor_horas_extras_nocturnas_ordinarias'),
-                ('horas_extras_diurnas_festivas', 'valor_horas_extras_diurnas_festivas'),
-                ('horas_extras_nocturnas_festivas', 'valor_horas_extras_nocturnas_festivas'),
-            ]
-        }),
-        ('Totales', {
-            'fields': [
-                ('total_ordinario', 'total_recargos'),
-                ('total_horas_extras', 'total_a_pagar'),
-                'fecha_calculo'
-            ]
-        })
-    ]
-
-
 @admin.register(RegistroTurno)
 class RegistroTurnoAdmin(admin.ModelAdmin):
     list_display = [
-        'empleado', 'fecha', 'tipo_turno_display', 'estado_display',
-        'horas_trabajadas', 'horas_extras', 'dia_tipo', 'total_pagar'
+        'operador_nombre', 'fecha', 'tipo_turno_display', 'estado_display',
+        'horas_trabajadas', 'dia_tipo'
     ]
     list_filter = [
-        'estado', 'tipo_turno', 'es_domingo', 'es_festivo', 
-        'incluye_nocturno', 'fecha__month'
+        'estado', 'tipo_turno', 'es_domingo', 'es_festivo',
+        'incluye_nocturno'
     ]
-    search_fields = ['empleado__nombres', 'empleado__apellidos', 'empleado__cedula']
+    search_fields = ['operador__username', 'operador__first_name', 'operador__last_name']
     date_hierarchy = 'fecha'
     readonly_fields = [
-        'es_lunes', 'es_martes', 'es_miercoles', 'es_jueves', 
+        'es_lunes', 'es_martes', 'es_miercoles', 'es_jueves',
         'es_viernes', 'es_sabado', 'es_domingo', 'es_festivo',
-        'incluye_nocturno', 'horas_programadas', 'horas_extras',
+        'incluye_nocturno', 'horas_programadas',
         'created_at', 'updated_at'
     ]
-    
-    inlines = [CalculoRecargoInline]
-    
+
     fieldsets = [
         ('Información del Turno', {
             'fields': [
-                ('empleado', 'tipo_turno'),
+                ('operador', 'tipo_turno'),
                 ('fecha', 'estado'),
                 'observaciones'
             ]
@@ -260,7 +148,7 @@ class RegistroTurnoAdmin(admin.ModelAdmin):
         ('Horarios', {
             'fields': [
                 ('hora_inicio_real', 'hora_fin_real'),
-                ('horas_programadas', 'horas_trabajadas', 'horas_extras'),
+                ('horas_programadas', 'horas_trabajadas'),
             ]
         }),
         ('Clasificación Automática', {
@@ -273,14 +161,18 @@ class RegistroTurnoAdmin(admin.ModelAdmin):
             'classes': ['collapse']
         })
     ]
-    
+
+    def operador_nombre(self, obj):
+        return obj.operador.get_full_name() or obj.operador.username
+    operador_nombre.short_description = 'Operador'
+
     def tipo_turno_display(self, obj):
         colores = {
-            'M': '#3498db',  # Mañana - Azul
-            'T': '#f39c12',  # Tarde - Naranja  
-            'N': '#2c3e50',  # Noche - Gris oscuro
-            'A': '#2ecc71',  # Apoyo - Verde
-            'D': '#95a5a6'   # Descanso - Gris
+            'Apoyo-A': '#2ecc71',        # Apoyo - Verde
+            'Turno 1-M': '#3498db',      # Mañana - Azul
+            'Turno 2-T': '#f39c12',      # Tarde - Naranja
+            'Turno 3-N': '#2c3e50',      # Noche - Gris oscuro
+            'Des o Permi-D': '#95a5a6'   # Descanso - Gris
         }
         color = colores.get(obj.tipo_turno.codigo, '#000000')
         return format_html(
@@ -289,7 +181,7 @@ class RegistroTurnoAdmin(admin.ModelAdmin):
             obj.tipo_turno.codigo
         )
     tipo_turno_display.short_description = 'Turno'
-    
+
     def estado_display(self, obj):
         colores = {
             'programado': '#3498db',
@@ -305,7 +197,7 @@ class RegistroTurnoAdmin(admin.ModelAdmin):
             obj.get_estado_display()
         )
     estado_display.short_description = 'Estado'
-    
+
     def dia_tipo(self, obj):
         iconos = []
         if obj.es_domingo:
@@ -316,38 +208,12 @@ class RegistroTurnoAdmin(admin.ModelAdmin):
             iconos.append('🌙 Noct')
         if obj.es_sabado:
             iconos.append('🟠 Sáb')
-        
+
         return ' '.join(iconos) if iconos else '⚪ Regular'
     dia_tipo.short_description = 'Tipo de Día'
-    
-    def total_pagar(self, obj):
-        if hasattr(obj, 'calculo'):
-            return format_html(
-                '<strong>${:,.0f}</strong>',
-                obj.calculo.total_a_pagar
-            )
-        return 'Sin calcular'
-    total_pagar.short_description = 'Total a Pagar'
-    
-    actions = ['calcular_recargos_seleccionados', 'marcar_como_trabajado']
-    
-    def calcular_recargos_seleccionados(self, request, queryset):
-        calculados = 0
-        for registro in queryset:
-            calculo, created = CalculoRecargo.objects.get_or_create(
-                registro_turno=registro,
-                defaults={'valor_hora_base': registro.empleado.valor_hora or Decimal('0')}
-            )
-            calculo.calcular_recargos()
-            calculo.save()
-            calculados += 1
-        
-        self.message_user(
-            request,
-            f'Se calcularon los recargos para {calculados} registros.'
-        )
-    calcular_recargos_seleccionados.short_description = "Calcular recargos para registros seleccionados"
-    
+
+    actions = ['marcar_como_trabajado']
+
     def marcar_como_trabajado(self, request, queryset):
         updated = queryset.update(estado='trabajado')
         self.message_user(
@@ -357,104 +223,30 @@ class RegistroTurnoAdmin(admin.ModelAdmin):
     marcar_como_trabajado.short_description = "Marcar como trabajado"
 
 
-@admin.register(CalculoRecargo)
-class CalculoRecargoAdmin(admin.ModelAdmin):
-    list_display = [
-        'empleado_turno', 'fecha_turno', 'valor_hora_base',
-        'horas_ordinarias', 'total_recargos_display', 
-        'total_horas_extras_display', 'total_a_pagar_display'
-    ]
-    list_filter = [
-        'registro_turno__empleado', 'registro_turno__fecha',
-        'registro_turno__es_domingo', 'registro_turno__es_festivo'
-    ]
-    readonly_fields = [
-        'valor_hora_base', 'total_ordinario', 'total_recargos',
-        'total_horas_extras', 'total_a_pagar', 'fecha_calculo'
-    ]
-    
-    fieldsets = [
-        ('Información Base', {
-            'fields': [
-                'registro_turno',
-                ('valor_hora_base', 'horas_ordinarias')
-            ]
-        }),
-        ('Recargos Aplicados', {
-            'fields': [
-                ('horas_recargo_nocturno', 'valor_recargo_nocturno'),
-                ('horas_recargo_dominical', 'valor_recargo_dominical'),
-                ('horas_recargo_festivo', 'valor_recargo_festivo'),
-                ('horas_recargo_nocturno_festivo', 'valor_recargo_nocturno_festivo'),
-            ]
-        }),
-        ('Horas Extras', {
-            'fields': [
-                ('horas_extras_diurnas_ordinarias', 'valor_horas_extras_diurnas_ordinarias'),
-                ('horas_extras_nocturnas_ordinarias', 'valor_horas_extras_nocturnas_ordinarias'),
-                ('horas_extras_diurnas_festivas', 'valor_horas_extras_diurnas_festivas'),
-                ('horas_extras_nocturnas_festivas', 'valor_horas_extras_nocturnas_festivas'),
-            ]
-        }),
-        ('Totales Calculados', {
-            'fields': [
-                ('total_ordinario', 'total_recargos'),
-                ('total_horas_extras', 'total_a_pagar'),
-                'fecha_calculo'
-            ]
-        })
-    ]
-    
-    def empleado_turno(self, obj):
-        return f"{obj.registro_turno.empleado.nombres} - {obj.registro_turno.tipo_turno.codigo}"
-    empleado_turno.short_description = 'Empleado - Turno'
-    
-    def fecha_turno(self, obj):
-        return obj.registro_turno.fecha
-    fecha_turno.short_description = 'Fecha'
-    
-    def total_recargos_display(self, obj):
-        return format_html('<strong>${:,.0f}</strong>', obj.total_recargos)
-    total_recargos_display.short_description = 'Total Recargos'
-    
-    def total_horas_extras_display(self, obj):
-        return format_html('<strong>${:,.0f}</strong>', obj.total_horas_extras)
-    total_horas_extras_display.short_description = 'Total H. Extras'
-    
-    def total_a_pagar_display(self, obj):
-        return format_html(
-            '<strong style="color: #27ae60; font-size: 14px;">${:,.0f}</strong>', 
-            obj.total_a_pagar
-        )
-    total_a_pagar_display.short_description = 'Total a Pagar'
-
-
 @admin.register(ResumenMensual)
 class ResumenMensualAdmin(admin.ModelAdmin):
     list_display = [
-        'empleado', 'periodo', 'total_turnos', 'total_horas_trabajadas',
-        'total_horas_extras', 'total_a_pagar_display'
+        'operador_nombre', 'periodo', 'total_turnos', 'total_horas_trabajadas',
+        'horas_nocturnas', 'horas_dominicales'
     ]
-    list_filter = ['ano', 'mes', 'empleado']
-    search_fields = ['empleado__nombres', 'empleado__apellidos']
+    list_filter = ['ano', 'mes']
+    search_fields = ['operador__username', 'operador__first_name', 'operador__last_name']
     readonly_fields = [
-        'total_horas_trabajadas', 'total_horas_ordinarias', 'total_horas_extras',
+        'total_horas_trabajadas', 'total_horas_ordinarias',
         'total_turnos', 'horas_lunes', 'horas_martes', 'horas_miercoles',
         'horas_jueves', 'horas_viernes', 'horas_sabados', 'horas_domingos',
-        'horas_festivos', 'total_recargos_nocturnos', 'total_recargos_dominicales',
-        'total_recargos_festivos', 'total_recargos_nocturno_festivo',
-        'total_valor_ordinario', 'total_valor_recargos', 'total_valor_horas_extras',
-        'total_a_pagar', 'fecha_generacion', 'actualizado_en'
+        'horas_festivos', 'horas_nocturnas', 'horas_nocturnas_festivas',
+        'horas_dominicales', 'fecha_calculo'
     ]
-    
+
     fieldsets = [
         ('Período', {
-            'fields': [('empleado', 'mes', 'ano')]
+            'fields': [('operador', 'mes', 'ano')]
         }),
         ('Resumen de Horas', {
             'fields': [
                 ('total_turnos', 'total_horas_trabajadas'),
-                ('total_horas_ordinarias', 'total_horas_extras'),
+                'total_horas_ordinarias',
             ]
         }),
         ('Horas por Día de la Semana', {
@@ -465,44 +257,37 @@ class ResumenMensualAdmin(admin.ModelAdmin):
             ],
             'classes': ['collapse']
         }),
-        ('Totales de Recargos', {
+        ('Horas por Tipo de Turno', {
             'fields': [
-                ('total_recargos_nocturnos', 'total_recargos_dominicales'),
-                ('total_recargos_festivos', 'total_recargos_nocturno_festivo'),
+                ('horas_nocturnas', 'horas_dominicales'),
+                'horas_nocturnas_festivas',
             ],
             'classes': ['collapse']
         }),
-        ('Totales Monetarios', {
-            'fields': [
-                ('total_valor_ordinario', 'total_valor_recargos'),
-                ('total_valor_horas_extras', 'total_a_pagar'),
-                ('fecha_generacion', 'actualizado_en')
-            ]
+        ('Sistema', {
+            'fields': ['fecha_calculo']
         })
     ]
-    
+
+    def operador_nombre(self, obj):
+        return obj.operador.get_full_name() or obj.operador.username
+    operador_nombre.short_description = 'Operador'
+
     def periodo(self, obj):
         meses = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
                 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
         mes_nombre = meses[obj.mes] if 1 <= obj.mes <= 12 else str(obj.mes)
         return f"{mes_nombre} {obj.ano}"
     periodo.short_description = 'Período'
-    
-    def total_a_pagar_display(self, obj):
-        return format_html(
-            '<strong style="color: #27ae60; font-size: 14px;">${:,.0f}</strong>', 
-            obj.total_a_pagar
-        )
-    total_a_pagar_display.short_description = 'Total a Pagar'
-    
+
     actions = ['generar_resumen_seleccionados']
-    
+
     def generar_resumen_seleccionados(self, request, queryset):
         generados = 0
         for resumen in queryset:
-            resumen.generar_resumen()
+            resumen.calcular_resumen()
             generados += 1
-        
+
         self.message_user(
             request,
             f'Se regeneraron {generados} resúmenes mensuales.'
@@ -510,7 +295,109 @@ class ResumenMensualAdmin(admin.ModelAdmin):
     generar_resumen_seleccionados.short_description = "Regenerar resúmenes seleccionados"
 
 
+# ============================================================
+# MOTOR NORMATIVO PARAMETRIZABLE
+# ============================================================
+
+@admin.register(ParametroNormativo)
+class ParametroNormativoAdmin(admin.ModelAdmin):
+    """
+    Admin para gestionar parámetros normativos por fecha de vigencia.
+    Cambio de ley = nuevo registro con nueva vigencia_desde.
+    """
+    list_display = [
+        'vigencia_desde', 'hora_inicio_nocturno_display', 'recargos_display',
+        'jornada_semanal_max', 'descripcion_corta'
+    ]
+    list_filter = ['vigencia_desde']
+    ordering = ['-vigencia_desde']
+    
+    fieldsets = [
+        ('Vigencia', {
+            'fields': [('vigencia_desde', 'vigencia_hasta')],
+            'description': 'Fecha desde la cual aplican estos parámetros. Cambio de ley = nuevo registro.'
+        }),
+        ('Jornada Nocturna (Art. 160 CST)', {
+            'fields': [('hora_inicio_nocturno', 'hora_fin_nocturno')],
+            'description': 'El horario nocturno varía según la reforma legal (21:00 → 19:00 desde Ley 2101).'
+        }),
+        ('Recargos (%)', {
+            'fields': [
+                ('recargo_nocturno', 'recargo_dominical_festivo'),
+                ('recargo_nocturno_festivo',),
+                ('recargo_extra_diurno', 'recargo_extra_nocturno'),
+            ],
+            'description': 'Porcentajes como decimales: 35% = 0.35, 75% = 0.75'
+        }),
+        ('Jornada Legal', {
+            'fields': [
+                ('jornada_diaria_max', 'jornada_semanal_max'),
+                'divisor_mensual',
+            ]
+        }),
+        ('Topes Horas Extra', {
+            'fields': [('tope_extra_dia', 'tope_extra_semana')],
+            'classes': ['collapse']
+        }),
+        ('Metadata', {
+            'fields': ['descripcion', 'created_at', 'updated_at'],
+            'classes': ['collapse']
+        }),
+    ]
+    
+    readonly_fields = ['created_at', 'updated_at']
+    
+    def hora_inicio_nocturno_display(self, obj):
+        return obj.hora_inicio_nocturno.strftime('%H:%M')
+    hora_inicio_nocturno_display.short_description = 'Inicio Nocturno'
+    
+    def recargos_display(self, obj):
+        return format_html(
+            '<span title="RNO: {rno}%, RDF: {rdf}%, RNF: {rnf}%">RNO {rno}% | RDF {rdf}%</span>',
+            rno=int(obj.recargo_nocturno * 100),
+            rdf=int(obj.recargo_dominical_festivo * 100),
+            rnf=int(obj.recargo_nocturno_festivo * 100)
+        )
+    recargos_display.short_description = 'Recargos'
+    
+    def descripcion_corta(self, obj):
+        return obj.descripcion[:40] + '...' if len(obj.descripcion) > 40 else obj.descripcion
+    descripcion_corta.short_description = 'Descripción'
+
+
+@admin.register(PoliticaEmpresa)
+class PoliticaEmpresaAdmin(admin.ModelAdmin):
+    """Admin para políticas de empresa (reglas más favorables que la ley)."""
+    list_display = [
+        'vigencia_desde', 'pagar_dominical_100', 'sabado_es_descanso',
+        'redondear_minutos', 'usar_banco_horas'
+    ]
+    list_filter = ['pagar_dominical_100', 'sabado_es_descanso', 'usar_banco_horas']
+    ordering = ['-vigencia_desde']
+    
+    fieldsets = [
+        ('Vigencia', {
+            'fields': ['vigencia_desde']
+        }),
+        ('Políticas Extralegales', {
+            'fields': [
+                'pagar_dominical_100',
+                'sabado_es_descanso',
+                'redondear_minutos',
+                'usar_banco_horas',
+            ],
+            'description': 'Estas políticas pueden ser más favorables que el mínimo legal.'
+        }),
+        ('Metadata', {
+            'fields': ['descripcion', 'created_at'],
+            'classes': ['collapse']
+        }),
+    ]
+    
+    readonly_fields = ['created_at']
+
+
 # Personalización del título del admin
-admin.site.site_header = "Sistema de Horas Extras - Centro de Cómputo"
-admin.site.site_title = "Horas Extras Admin"
-admin.site.index_title = "Administración de Horas Extras y Recargos"
+admin.site.site_header = "Sistema de Gestión de Turnos - Centro de Cómputo"
+admin.site.site_title = "Turnos Admin"
+admin.site.index_title = "Administración de Turnos y Horas Trabajadas"

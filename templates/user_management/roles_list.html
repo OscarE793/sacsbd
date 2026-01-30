@@ -243,14 +243,13 @@
 {% endblock %}
 
 {% block reports_extra_js %}
+<script src="{% static 'custom/js/datatables-es.js' %}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar DataTable
+    // Inicializar DataTable con configuración en español
     if (document.getElementById('rolesTable')) {
         $('#rolesTable').DataTable({
-            "language": {
-                "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
-            },
+            "language": DataTablesSpanish,
             "pageLength": 25,
             "responsive": true,
             "order": [[ 0, "asc" ]], // Ordenar por nombre

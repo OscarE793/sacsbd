@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Parámetros Normativos - SACSBD{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            {% for item in breadcrumb %}
+            {% if item.url %}
+            <li class="breadcrumb-item"><a href="{{ item.url }}">{{ item.titulo }}</a></li>
+            {% else %}
+            <li class="breadcrumb-item active">{{ item.titulo }}</li>
+            {% endif %}
+            {% endfor %}
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2><i class="fas fa-balance-scale"></i> {{ titulo }}</h2>
+            <p class="text-muted">
+                Gestión de parámetros normativos laborales de Colombia.
+                Cambios de ley sin modificar código.
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{% url 'horas_extras:crear_parametro_normativo' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Nuevo Parámetro
+            </a>
+        </div>
+    </div>
+
+    <!-- Parámetro Vigente Actual -->
+    {% if parametro_vigente %}
+    <div class="alert alert-info mb-4">
+        <h5><i class="fas fa-check-circle"></i> Parámetro Vigente Hoy ({{ hoy }})</h5>
+        <div class="row">
+            <div class="col-md-3">
+                <strong>Inicio Nocturno:</strong> {{ parametro_vigente.hora_inicio_nocturno }}
+            </div>
+            <div class="col-md-3">
+                <strong>Recargo Nocturno:</strong> {{ parametro_vigente.recargo_nocturno|floatformat:2 }}%
+            </div>
+            <div class="col-md-3">
+                <strong>Recargo Dominical:</strong> {{ parametro_vigente.recargo_dominical_festivo|floatformat:2 }}%
+            </div>
+            <div class="col-md-3">
+                <strong>Jornada Semanal:</strong> {{ parametro_vigente.jornada_semanal_max }}h
+            </div>
+        </div>
+        <small class="text-muted">{{ parametro_vigente.descripcion }}</small>
+    </div>
+    {% endif %}
+
+    <!-- Tabla de Parámetros -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Histórico de Parámetros Normativos</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Vigencia</th>
+                            <th>Horario Nocturno</th>
+                            <th>Recargos</th>
+                            <th>Jornada Semanal</th>
+                            <th>Descripción</th>
+                            <th>Estado</th>
+                            <th width="150">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for param in parametros %}
+                        <tr {% if param == parametro_vigente %}class="table-success" {% endif %}>
+                            <td>
+                                <strong>{{ param.vigencia_desde }}</strong>
+                                {% if param.vigencia_hasta %}
+                                <br><small class="text-muted">hasta {{ param.vigencia_hasta }}</small>
+                                {% else %}
+                                <br><small class="text-muted">indefinida</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ param.hora_inicio_nocturno }} - {{ param.hora_fin_nocturno }}
+                            </td>
+                            <td>
+                                <small>
+                                    RNO: {{ param.recargo_nocturno|floatformat:0 }}%<br>
+                                    RDF: {{ param.recargo_dominical_festivo|floatformat:0 }}%
+                                </small>
+                            </td>
+                            <td>{{ param.jornada_semanal_max }}h</td>
+                            <td>
+                                <small>{{ param.descripcion|truncatewords:10 }}</small>
+                            </td>
+                            <td>
+                                {% if param == parametro_vigente %}
+                                <span class="badge bg-success">Vigente</span>
+                                {% elif param.vigencia_desde > hoy %}
+                                <span class="badge bg-warning">Futuro</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Histórico</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{% url 'horas_extras:ver_parametro_normativo' param.id %}"
+                                        class="btn btn-info" title="Ver">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'horas_extras:editar_parametro_normativo' param.id %}"
+                                        class="btn btn-warning" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% if parametros|length > 1 %}
+                                    <a href="{% url 'horas_extras:eliminar_parametro_normativo' param.id %}"
+                                        class="btn btn-danger" title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">
+                                No hay parámetros normativos configurados.
+                                <a href="{% url 'horas_extras:crear_parametro_normativo' %}">Crear el primero</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ayuda -->
+    <div class="alert alert-secondary mt-4 border border-gray-300">
+        <h6 class="text-gray-800 fw-bold"><i class="fas fa-info-circle text-gray-800"></i> Información Importante</h6>
+        <ul class="mb-0 text-gray-800">
+            <li><strong>Cambios de Ley:</strong> Crear nuevo parámetro con fecha de vigencia, NO editar históricos.</li>
+            <li><strong>Recargos:</strong> Usar decimales (35% = 0.35, 75% = 0.75).</li>
+            <li><strong>Regenerar Turnos:</strong> Después de crear/editar parámetros, regenerar turnos afectados.</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

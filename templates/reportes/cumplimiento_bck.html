@@ -300,14 +300,13 @@
 <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
 
+<script src="{% static 'custom/js/datatables-es.js' %}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Inicializar DataTable
     if (document.getElementById('cumplimientoTable')) {
         $('#cumplimientoTable').DataTable({
-            "language": {
-                "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
-            },
+            "language": DataTablesSpanish,
             "pageLength": 25,
             "responsive": true,
             "order": [[ 5, "asc" ]] // Ordenar por porcentaje de cumplimiento ascendente

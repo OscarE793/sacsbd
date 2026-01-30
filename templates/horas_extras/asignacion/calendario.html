@@ -1,0 +1,377 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Calendario de Asignación de Turnos{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'assets/plugins/custom/fullcalendar/fullcalendar.bundle.css' %}" rel="stylesheet"
+    type="text/css" />
+<style>
+    .fc-event {
+        cursor: pointer;
+    }
+
+    .fc-daygrid-day {
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .fc-daygrid-day:hover {
+        background-color: rgba(245, 248, 250, 0.5);
+    }
+
+    .fc-day-today {
+        background-color: rgba(255, 193, 7, 0.1) !important;
+    }
+
+    /* Dias festivos */
+    .dia-festivo {
+        background-color: rgba(220, 53, 69, 0.08) !important;
+    }
+
+    .dia-festivo .fc-daygrid-day-number {
+        color: #dc3545 !important;
+        font-weight: bold;
+    }
+
+    /* Tooltip personalizado */
+    .turno-tooltip {
+        position: absolute;
+        z-index: 9999;
+        background: #1e1e2d;
+        color: #fff;
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-size: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        pointer-events: none;
+        min-width: 180px;
+    }
+
+    .turno-tooltip .tooltip-title {
+        font-weight: bold;
+        margin-bottom: 6px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        padding-bottom: 4px;
+    }
+
+    .turno-tooltip .tooltip-row {
+        display: flex;
+        justify-content: space-between;
+        margin: 3px 0;
+    }
+
+    .turno-tooltip .tooltip-label {
+        color: #a1a5b7;
+    }
+
+    .turno-tooltip .tooltip-value {
+        font-weight: 600;
+    }
+
+    .turno-tooltip .tooltip-total {
+        margin-top: 6px;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        padding-top: 6px;
+        font-weight: bold;
+        font-size: 13px;
+    }
+
+    .badge-festivo {
+        background-color: #f1416c;
+        color: white;
+        font-size: 10px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        margin-left: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block page_title %}Asignación de Turnos{% endblock %}
+
+{% block content %}
+<div class="row g-5 g-xl-8">
+    <!-- Panel Izquierdo: Controles -->
+    <div class="col-xl-3">
+        <div class="card card-flush">
+            <div class="card-header pt-5">
+                <h3 class="card-title align-items-start flex-column">
+                    <span class="card-label fw-bold text-dark">Configuración</span>
+                    <span class="text-muted mt-1 fw-semibold fs-7">Selecciona operador y turno</span>
+                </h3>
+            </div>
+            <div class="card-body">
+                <!-- Selector de Operador -->
+                <div class="mb-5">
+                    <label class="form-label required">Operador</label>
+                    <select class="form-select form-select-solid" id="select_operador" data-control="select2"
+                        data-placeholder="Seleccionar operador">
+                        <option value="">-- Todos los operadores --</option>
+                        {% for op in operadores %}
+                        <option value="{{ op.id }}">{{ op.get_full_name|default:op.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Selector de Turno a Asignar -->
+                <div class="mb-5">
+                    <label class="form-label required">Turno a Asignar</label>
+                    <div class="d-flex flex-column gap-3" id="turnos_container">
+                        {% for turno in tipos_turno %}
+                        <div class="form-check form-check-custom form-check-solid">
+                            <input class="form-check-input" type="radio" name="tipo_turno" value="{{ turno.id }}"
+                                id="turno_{{ turno.id }}"
+                                data-color="{% if turno.codigo == 'N' %}#6610f2{% elif turno.codigo == 'D' %}#20c997{% else %}#0d6efd{% endif %}" />
+                            <label class="form-check-label ms-2 fw-bold" for="turno_{{ turno.id }}">
+                                {{ turno.codigo }} - {{ turno.nombre }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+
+
+                <div class="mt-5">
+                    <div class="alert alert-info d-flex align-items-center p-5">
+                        <i class="ki-outline ki-information-5 fs-2hx text-info me-4"></i>
+                        <div class="d-flex flex-column">
+                            <h4 class="mb-1 text-info">Instrucciones</h4>
+                            <span>1. Selecciona un Operador.</span>
+                            <span>2. Selecciona un Turno.</span>
+                            <span>3. Haz clic en los días del calendario.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel Derecho: Calendario -->
+    <div class="col-xl-9">
+        <div class="card card-flush h-xl-100">
+            <div class="card-header pt-7">
+                <h3 class="card-title align-items-start flex-column">
+                    <span class="card-label fw-bold text-dark">Calendario de Turnos</span>
+                    <span class="text-muted mt-1 fw-semibold fs-7">Vista mensual | Clic en día para asignar</span>
+                </h3>
+                <div class="card-toolbar">
+                    <span class="badge badge-light-success me-2" id="status_indicator">Sistema Actualizado</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="calendar_asignacion"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'assets/plugins/custom/fullcalendar/fullcalendar.bundle.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var calendarEl = document.getElementById('calendar_asignacion');
+        var selectOperador = document.getElementById('select_operador');
+
+        var selectedTurnoId = null;
+
+        // Inicializar FullCalendar
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek'
+            },
+            initialView: 'dayGridMonth',
+            locale: 'es',
+            editable: false, // No drag & drop por ahora
+            selectable: true,
+            dayMaxEvents: true, // +more link
+
+            // Cargar eventos dinámicamente
+            events: function (info, successCallback, failureCallback) {
+                var operador_id = selectOperador.value;
+                var url = "{% url 'horas_extras:api_eventos_calendario' %}";
+
+                // Si hay operador seleccionado, filtrar
+                var params = {
+                    start: info.startStr,
+                    end: info.endStr
+                };
+                if (operador_id) {
+                    params.operador_id = operador_id;
+                }
+
+                $.ajax({
+                    url: url,
+                    data: params,
+                    success: function (response) {
+                        successCallback(response);
+                    },
+                    error: function () {
+                        failureCallback();
+                    }
+                });
+            },
+
+            // Click en un día vacío
+            dateClick: function (info) {
+                handleDateClick(info.dateStr);
+            },
+
+            // Click en un evento existente (para editarlo)
+            eventClick: function (info) {
+                // Al hacer clic en un evento, podríamos abrir modal o reemplazar directamente si hay turno seleccionado
+                if (selectedTurnoId && selectOperador.value) {
+                    // Si ya tengo herramienta seleccionada, actualizo
+                    asignarTurno(info.event.startStr, selectedTurnoId, selectOperador.value);
+                } else {
+                    var props = info.event.extendedProps;
+                    var horasHTML = '';
+                    if (props.horas) {
+                        horasHTML = '<br><br><b>Desglose de Horas:</b><br>';
+                        horasHTML += 'HOD: ' + props.horas.HOD + ' | RNO: ' + props.horas.RNO + '<br>';
+                        horasHTML += 'RDF: ' + props.horas.RDF + ' | RNF: ' + props.horas.RNF + '<br>';
+                        horasHTML += '<b>TOTAL: ' + props.horas.TOTAL + 'h</b>';
+                    }
+                    Swal.fire({
+                        html: "<b>Turno:</b> " + info.event.title + "<br><b>Operador:</b> " + props.operador_nombre + (props.es_festivo ? '<span class="badge-festivo">FESTIVO</span>' : '') + horasHTML,
+                        icon: "info"
+                    });
+                }
+            },
+
+            // Tooltip al pasar el mouse
+            eventMouseEnter: function (info) {
+                var props = info.event.extendedProps;
+                var h = props.horas || { HOD: 0, RNO: 0, RDF: 0, RNF: 0, TOTAL: 0 };
+
+                var tooltip = document.createElement('div');
+                tooltip.className = 'turno-tooltip';
+                tooltip.innerHTML = `
+                    <div class="tooltip-title">${info.event.title} - ${props.operador_nombre}${props.es_festivo ? ' <span class="badge-festivo">Festivo</span>' : ''}</div>
+                    <div class="tooltip-row"><span class="tooltip-label">HOD (Ord. Diurno):</span><span class="tooltip-value">${h.HOD}h</span></div>
+                    <div class="tooltip-row"><span class="tooltip-label">RNO (Rec. Nocturno):</span><span class="tooltip-value">${h.RNO}h</span></div>
+                    <div class="tooltip-row"><span class="tooltip-label">RDF (Rec. Dom/Fest):</span><span class="tooltip-value">${h.RDF}h</span></div>
+                    <div class="tooltip-row"><span class="tooltip-label">RNF (Noc. Dom/Fest):</span><span class="tooltip-value">${h.RNF}h</span></div>
+                    <div class="tooltip-total">TOTAL: ${h.TOTAL}h</div>
+                `;
+                document.body.appendChild(tooltip);
+
+                var rect = info.el.getBoundingClientRect();
+                tooltip.style.left = (rect.left + window.scrollX) + 'px';
+                tooltip.style.top = (rect.bottom + window.scrollY + 5) + 'px';
+
+                info.el._tooltip = tooltip;
+            },
+
+            eventMouseLeave: function (info) {
+                if (info.el._tooltip) {
+                    info.el._tooltip.remove();
+                    info.el._tooltip = null;
+                }
+            },
+
+            // Resaltar días festivos
+            dayCellDidMount: function (arg) {
+                var dayOfWeek = arg.date.getDay();
+                // Domingo = 0
+                if (dayOfWeek === 0) {
+                    arg.el.classList.add('dia-festivo');
+                }
+                // TODO: Agregar festivos de Colombia via API
+            }
+        });
+
+        calendar.render();
+
+        // Recargar eventos al cambiar operador
+        $(selectOperador).on('change', function () {
+            calendar.refetchEvents();
+            validateForm();
+        });
+
+        // Manejar selección de turno (Radio Buttons)
+        $('input[name="tipo_turno"]').on('change', function () {
+            selectedTurnoId = $(this).val();
+            validateForm();
+        });
+
+        function validateForm() {
+            var op = selectOperador.value;
+            // Solo habilitamos asignación rápida si hay operador UNICO seleccionado
+            if (op && selectedTurnoId) {
+                // Habilitamos modo "Pintar" en el calendario
+                // Visualmente podríamos cambiar el cursor
+                $('#calendar_asignacion').css('cursor', 'cell');
+            } else {
+                $('#calendar_asignacion').css('cursor', 'default');
+            }
+        }
+
+        function handleDateClick(dateStr) {
+            var operadorId = selectOperador.value;
+
+            if (!operadorId) {
+                Swal.fire({
+                    text: "Por favor selecciona un operador primero para asignar turnos.",
+                    icon: "warning",
+                    buttonsStyling: false,
+                    confirmButtonText: "Entendido",
+                    customClass: { confirmButton: "btn btn-primary" }
+                });
+                return;
+            }
+
+            if (!selectedTurnoId) {
+                Swal.fire({
+                    text: "Selecciona un tipo de turno para asignar.",
+                    icon: "warning",
+                    buttonsStyling: false,
+                    confirmButtonText: "Entendido",
+                    customClass: { confirmButton: "btn btn-primary" }
+                });
+                return;
+            }
+
+            // Proceder a asignar
+            asignarTurno(dateStr, selectedTurnoId, operadorId);
+        }
+
+        function asignarTurno(fecha, turnoId, operadorId) {
+            // Mostrar loading
+            var loading = Swal.fire({
+                title: 'Asignando...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading() }
+            });
+
+            $.ajax({
+                url: "{% url 'horas_extras:api_asignar_turno' %}",
+                type: "POST",
+                contentType: "application/json",
+                headers: { "X-CSRFToken": "{{ csrf_token }}" },
+                data: JSON.stringify({
+                    "operador_id": operadorId,
+                    "fecha": fecha,
+                    "tipo_turno_id": turnoId
+                }),
+                success: function (response) {
+                    loading.close();
+                    // Refetch solo para asegurar consistencia
+                    calendar.refetchEvents();
+
+                    // Notificación toast pequeña
+                    toastr.success("Turno asignado correctamente");
+                },
+                error: function (xhr) {
+                    loading.close();
+                    Swal.fire("Error", "No se pudo asignar el turno: " + xhr.responseText, "error");
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

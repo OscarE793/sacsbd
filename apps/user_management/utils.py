@@ -157,29 +157,55 @@ def check_user_access_restrictions(user, request=None):
     """
     Verifica las restricciones de acceso de un usuario
     Retorna un diccionario con el estado de las verificaciones
+    OPTIMIZADO: Usa caché para evitar consultas repetitivas
     """
     if not user or not user.is_authenticated:
         return {'allowed': False, 'reason': 'Usuario no autenticado'}
-    
+
+    # Usar caché para restricciones (válido por 5 minutos)
+    from django.core.cache import cache
+    cache_key = f'user_restrictions_{user.id}'
+    cached_result = cache.get(cache_key)
+
+    if cached_result is not None:
+        # Verificar IP en tiempo real (no se cachea porque puede cambiar)
+        if request and cached_result.get('check_ip', False):
+            try:
+                profile = user.profile
+                if profile.ip_permitidas:
+                    client_ip = get_client_ip(request)
+                    if not profile.can_access_from_ip(client_ip):
+                        return {
+                            'allowed': False,
+                            'reason': f'Acceso no permitido desde la IP {client_ip}'
+                        }
+            except Exception:
+                pass
+
+        return cached_result
+
     try:
         profile = user.profile
-        
+
         # Verificar si está bloqueado
         if profile.is_blocked():
-            return {
-                'allowed': False, 
+            result = {
+                'allowed': False,
                 'reason': f'Usuario bloqueado hasta {profile.bloqueado_hasta}'
             }
-        
+            cache.set(cache_key, result, 60)  # Cachear por 1 minuto solo
+            return result
+
         # Verificar IP si está configurada
-        if request and profile.ip_permitidas:
+        check_ip = bool(profile.ip_permitidas)
+        if request and check_ip:
             client_ip = get_client_ip(request)
             if not profile.can_access_from_ip(client_ip):
                 return {
                     'allowed': False,
                     'reason': f'Acceso no permitido desde la IP {client_ip}'
                 }
-        
+
         # Verificar horario si está configurado
         if profile.horario_acceso_inicio and profile.horario_acceso_fin:
             current_time = timezone.now().time()
@@ -188,16 +214,21 @@ def check_user_access_restrictions(user, request=None):
                     'allowed': False,
                     'reason': f'Acceso fuera del horario permitido ({profile.horario_acceso_inicio} - {profile.horario_acceso_fin})'
                 }
-        
+
         # Verificar si requiere cambio de contraseña
         if profile.cambio_password_requerido:
-            return {
+            result = {
                 'allowed': True,
                 'require_password_change': True,
-                'reason': 'Se requiere cambio de contraseña'
+                'reason': 'Se requiere cambio de contraseña',
+                'check_ip': check_ip
             }
-        
-        return {'allowed': True}
+            cache.set(cache_key, result, 300)
+            return result
+
+        result = {'allowed': True, 'check_ip': check_ip}
+        cache.set(cache_key, result, 300)  # Cachear por 5 minutos
+        return result
         
     except Exception as e:
         logger.error(f"Error checking user access restrictions: {e}")

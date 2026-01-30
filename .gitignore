@@ -1,24 +1,44 @@
+# ======================
 # Python
+# ======================
 __pycache__/
+**/__pycache__/
 *.py[cod]
+*.log
 *.sqlite3
 *.db
-*.log
 
+# ======================
 # Django
+# ======================
 /staticfiles/
 /media/
 /db.sqlite3
 
+# ======================
+# Entornos y configs locales
+# ======================
+.env
+*.env
+.claude/
+settings.local.json
+
+# ======================
 # OS
+# ======================
 .DS_Store
 Thumbs.db
+nul
 
+# ======================
 # Virtual Envs
+# ======================
 venv/
 sacsvenv/
 
-/*.env
-/.pytest_cache
+# ======================
+# Testing / tooling
+# ======================
+.pytest_cache/
 .idea/
 .vscode/

@@ -1,0 +1,900 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Calendario de Turnos - SACSBD{% endblock %}
+
+{% block extra_css %}
+<style>
+    .calendario-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px 10px 0 0;
+    }
+
+    .calendario-turnos {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 11px;
+    }
+
+    .calendario-turnos thead th {
+        background: #f8f9fa;
+        padding: 8px 4px;
+        text-align: center;
+        font-weight: 600;
+        font-size: 10px;
+        border: 1px solid #dee2e6;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .calendario-turnos thead th.empleado-col {
+        background: #e9ecef;
+        min-width: 180px;
+        text-align: left;
+        padding-left: 10px;
+    }
+
+    .calendario-turnos tbody td {
+        border: 1px solid #dee2e6;
+        padding: 2px;
+        height: 40px;
+        text-align: center;
+        vertical-align: middle;
+        position: relative;
+    }
+
+    .calendario-turnos tbody td.empleado-nombre {
+        background: #f8f9fa;
+        font-weight: 500;
+        text-align: left;
+        padding-left: 10px;
+        position: sticky;
+        left: 0;
+        z-index: 5;
+    }
+
+    /* Estilos de turnos */
+    .turno-cell {
+        min-width: 45px;
+        width: 45px;
+        height: 40px;
+        padding: 2px;
+        text-align: center;
+        vertical-align: middle;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
+    }
+
+    .turno-cell:hover:not(.no-existe) {
+        opacity: 0.8;
+        transform: scale(1.1);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        z-index: 100;
+    }
+
+    .turno-cell.vacia {
+        background: white;
+    }
+
+    .turno-cell.vacia:hover {
+        background: #e3f2fd;
+    }
+
+    .turno-cell.seleccionada {
+        outline: 3px solid #007bff;
+        outline-offset: -3px;
+        z-index: 50;
+    }
+
+    .turno-cell.seleccionada::after {
+        content: '\2713';
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        font-size: 8px;
+        color: #007bff;
+        font-weight: bold;
+    }
+
+    /* Tipos de turno - Colores según especificación */
+    /* Apoyo-A: Azul claro */
+    .turno-apoyo,
+    .turno-apoyo-a {
+        background-color: #b3d9ff;
+        color: #003d7a;
+    }
+
+    /* Turno 1-M (Mañana): Naranja */
+    .turno-1-m,
+    .turno-manana {
+        background-color: #ffd699;
+        color: #804d00;
+    }
+
+    /* Turno 2-T (Tarde): Amarillo */
+    .turno-2-t,
+    .turno-tarde {
+        background-color: #ffffb3;
+        color: #666600;
+    }
+
+    /* Turno 3-N (Noche): Verde */
+    .turno-3-n,
+    .turno-noche {
+        background-color: #b3ffb3;
+        color: #004d00;
+    }
+
+    /* Des o Permi-D (Descanso): Rojo claro */
+    .turno-descanso,
+    .turno-des {
+        background-color: #ffcccc;
+        color: #cc0000;
+    }
+
+    .turno-otro {
+        background-color: #e0e0e0;
+        color: #555;
+    }
+
+    /* Estados de turno */
+    .turno-cell.trabajado {
+        border: 2px solid #28a745;
+        font-weight: bold;
+    }
+
+    .turno-cell.programado {
+        opacity: 0.7;
+        border: 1px dashed #999;
+    }
+
+    /* Días especiales */
+    .dia-domingo {
+        background-color: #fff8dc !important;
+    }
+
+    .dia-festivo {
+        background-color: #ffe6e6 !important;
+    }
+
+    /* Leyenda */
+    .leyenda-turnos {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin: 20px 0;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .leyenda-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .leyenda-color {
+        width: 30px;
+        height: 20px;
+        border-radius: 4px;
+        border: 1px solid #dee2e6;
+    }
+
+    .leyenda-texto {
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    /* Filtros */
+    .filtros-container {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .year-selector {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .year-selector h2 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: bold;
+    }
+
+    .year-selector button {
+        border: none;
+        background: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 5px 10px;
+    }
+
+    /* Scroll horizontal */
+    .tabla-scroll {
+        overflow-x: auto;
+        position: relative;
+    }
+
+    .tabla-scroll::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .tabla-scroll::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+
+    .tabla-scroll::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+    }
+
+    .tabla-scroll::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+    /* Barra de acciones flotante */
+    .barra-acciones-flotante {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        background: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        display: none;
+        z-index: 1000;
+        animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+        from {
+            transform: translateY(100px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .barra-acciones-flotante.visible {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="app-main flex-column flex-row-fluid" id="kt_app_main">
+    <div class="d-flex flex-column flex-column-fluid">
+        <!-- Toolbar -->
+        <div id="kt_app_toolbar" class="app-toolbar py-3 py-lg-6">
+            <div id="kt_app_toolbar_container" class="app-container container-fluid d-flex flex-stack">
+                <div class="page-title d-flex flex-column justify-content-center flex-wrap me-3">
+                    <h1 class="page-heading d-flex text-gray-900 fw-bold fs-3 flex-column justify-content-center my-0">
+                        Programación de Turnos y Recargos
+                    </h1>
+                    <ul class="breadcrumb breadcrumb-separatorless fw-semibold fs-7 my-0 pt-1">
+                        <li class="breadcrumb-item text-muted">
+                            <a href="{% url 'horas_extras:dashboard' %}" class="text-muted text-hover-primary">Dashboard</a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <span class="bullet bg-gray-500 w-5px h-2px"></span>
+                        </li>
+                        <li class="breadcrumb-item text-muted">Calendario</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div id="kt_app_content" class="app-content flex-column-fluid">
+            <div id="kt_app_content_container" class="app-container container-fluid">
+                <!-- CSRF Token for AJAX -->
+                {% csrf_token %}
+
+
+                <!-- Filtros -->
+                <div class="filtros-container">
+                    <div class="year-selector">
+                        <button type="button" onclick="cambiarAnio(-1)">◀</button>
+                        <h2 id="anio-actual">{{ ano_actual|default:"2025" }}</h2>
+                        <button type="button" onclick="cambiarAnio(1)">▶</button>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold fs-6">Mes</label>
+                            <select class="form-select" id="mes-select">
+                                <option value="1">Enero</option>
+                                <option value="2">Febrero</option>
+                                <option value="3">Marzo</option>
+                                <option value="4">Abril</option>
+                                <option value="5">Mayo</option>
+                                <option value="6">Junio</option>
+                                <option value="7">Julio</option>
+                                <option value="8">Agosto</option>
+                                <option value="9">Septiembre</option>
+                                <option value="10">Octubre</option>
+                                <option value="11">Noviembre</option>
+                                <option value="12">Diciembre</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold fs-6">Empleado</label>
+                            <select class="form-select" id="empleado-select">
+                                <option value="">Todos los empleados</option>
+                                {% for operador in operadores %}
+                                <option value="{{ operador.id }}">
+                                    {{ operador.first_name }} {{ operador.last_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="button" class="btn btn-primary w-100" onclick="cargarCalendario()">
+                                <i class="ki-outline ki-magnifier fs-2"></i>
+                                Buscar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Leyenda de Turnos -->
+                <div class="leyenda-turnos">
+                    <div class="leyenda-item">
+                        <div class="leyenda-color" style="background-color: #b3d9ff; border: 1px solid #dee2e6;"></div>
+                        <span class="leyenda-texto">Apoyo-A (13:00-21:00 Lun-Vie)</span>
+                    </div>
+                    <div class="leyenda-item">
+                        <div class="leyenda-color" style="background-color: #ffd699; border: 1px solid #dee2e6;"></div>
+                        <span class="leyenda-texto">Turno 1-M (06:00-14:00)</span>
+                    </div>
+                    <div class="leyenda-item">
+                        <div class="leyenda-color" style="background-color: #ffffb3; border: 1px solid #dee2e6;"></div>
+                        <span class="leyenda-texto">Turno 2-T (14:00-22:00)</span>
+                    </div>
+                    <div class="leyenda-item">
+                        <div class="leyenda-color" style="background-color: #b3ffb3; border: 1px solid #dee2e6;"></div>
+                        <span class="leyenda-texto">Turno 3-N (22:00-06:00)</span>
+                    </div>
+                    <div class="leyenda-item">
+                        <div class="leyenda-color" style="background-color: #ffcccc; border: 1px solid #dee2e6;"></div>
+                        <span class="leyenda-texto">Des o Permi-D (Descanso)</span>
+                    </div>
+                </div>
+
+                <!-- Tabla de Calendario -->
+                <div class="card">
+                    <div class="card-body p-0">
+                        <div class="tabla-scroll">
+                            <table class="calendario-turnos" id="tabla-calendario">
+                                <thead>
+                                    <tr id="calendario-header">
+                                        <th class="empleado-col">
+                                            <div style="display: flex; align-items: center; gap: 5px;">
+                                                <input type="checkbox" id="toggle-vista" style="margin-right: 5px;">
+                                                <span id="mes-nombre">enero {{ ano|default:"2025" }}</span>
+                                            </div>
+                                        </th>
+                                        <!-- Días del mes se generarán dinámicamente con JavaScript -->
+                                        {% for dia in "1234567890123456789012345678901" %}
+                                        <th id="dia-header-{{ forloop.counter }}">
+                                            <div>{{ forloop.counter }}</div>
+                                            <div style="font-size: 9px; font-weight: normal;" class="dia-semana-nombre">
+                                            </div>
+                                        </th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody id="calendario-body">
+                                    <!-- Los turnos se cargarán dinámicamente vía AJAX -->
+                                    <tr>
+                                        <td colspan="32" class="text-center py-5">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">Cargando...</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Barra de Acciones Flotante -->
+<div class="barra-acciones-flotante" id="barra-acciones">
+    <div class="d-flex align-items-center gap-3">
+        <div>
+            <span class="fw-bold" id="contador-seleccionados">0</span> días seleccionados
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" onclick="abrirModalAsignarTurnos()">
+            <i class="ki-outline ki-plus fs-3"></i>
+            Asignar Turnos
+        </button>
+        <button type="button" class="btn btn-light btn-sm" onclick="limpiarSeleccion()">
+            <i class="ki-outline ki-cross fs-3"></i>
+            Limpiar
+        </button>
+    </div>
+</div>
+
+<!-- Modal para Asignar Turnos -->
+<div class="modal fade" id="modalAsignarTurnos" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Asignar Turnos</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Empleado</label>
+                    <input type="text" class="form-control" id="modal-empleado-nombre" readonly>
+                    <input type="hidden" id="modal-empleado-id">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Días Seleccionados</label>
+                    <div id="modal-dias-seleccionados" class="p-3 bg-light rounded"
+                        style="max-height: 150px; overflow-y: auto;">
+                        <!-- Se llenarán con JavaScript -->
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Tipo de Turno</label>
+                    <select class="form-select" id="modal-tipo-turno">
+                        <option value="">Seleccione un turno...</option>
+                        {% for tipo in tipos_turno %}
+                        <option value="{{ tipo.id }}">{{ tipo.codigo }} - {{ tipo.descripcion }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="modal-sobrescribir">
+                    <label class="form-check-label" for="modal-sobrescribir">
+                        Sobrescribir turnos existentes
+                    </label>
+                </div>
+
+                <div id="modal-alert" class="alert" style="display: none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btn-guardar-turnos">
+                    <span class="spinner-border spinner-border-sm d-none" id="spinner-guardar"></span>
+                    Guardar Turnos
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ ano|json_script:"anio-data" }}
+
+<script>
+    let anioActual = JSON.parse(document.getElementById('anio-data').textContent) || 2025;
+    let celdasSeleccionadas = new Map(); // Mapa de {operador_id: {fecha: celda}}
+    let modoSeleccion = false;
+
+    function cambiarAnio(delta) {
+        anioActual += delta;
+        document.getElementById('anio-actual').textContent = anioActual;
+        limpiarSeleccion();
+        cargarCalendario();
+    }
+
+    function limpiarSeleccion() {
+        // Limpiar todas las selecciones
+        document.querySelectorAll('.turno-cell.seleccionada').forEach(cell => {
+            cell.classList.remove('seleccionada');
+        });
+        celdasSeleccionadas.clear();
+        actualizarBarraAcciones();
+    }
+
+    function actualizarBarraAcciones() {
+        const barra = document.getElementById('barra-acciones');
+        const contador = document.getElementById('contador-seleccionados');
+
+        if (celdasSeleccionadas.size > 0) {
+            barra.classList.add('visible');
+            contador.textContent = celdasSeleccionadas.size;
+        } else {
+            barra.classList.remove('visible');
+        }
+    }
+
+    function cargarCalendario() {
+        const mes = document.getElementById('mes-select').value;
+        const operadorId = document.getElementById('empleado-select').value;
+
+        // Actualizar nombre del mes
+        const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+            'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+        document.getElementById('mes-nombre').textContent = meses[mes - 1] + ' ' + anioActual;
+
+        // Actualizar nombres de días de la semana en el header
+        actualizarHeaderDias(anioActual, parseInt(mes));
+
+        // Mostrar indicador de carga
+        const tbody = document.getElementById('calendario-body');
+        tbody.innerHTML = '<tr><td colspan="32" class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div></td></tr>';
+
+        // Llamada AJAX para cargar los turnos
+        fetch(`{% url 'horas_extras:ajax_calendario_data' %}?mes=${mes}&ano=${anioActual}&operador_id=${operadorId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error al cargar el calendario');
+                }
+                return response.json();
+            })
+            .then(data => {
+                actualizarCalendario(data);
+            })
+            .catch(error => {
+                tbody.innerHTML = '<tr><td colspan="32" class="text-center text-danger py-5">Error al cargar calendario: ' + error.message + '</td></tr>';
+                console.error('Error al cargar calendario:', error);
+            });
+    }
+
+    function actualizarHeaderDias(anio, mes) {
+        const diasSemana = ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá'];
+        const diasEnMes = new Date(anio, mes, 0).getDate();
+
+        for (let dia = 1; dia <= 31; dia++) {
+            const headerCell = document.getElementById(`dia-header-${dia}`);
+            const nombreDiaElement = headerCell.querySelector('.dia-semana-nombre');
+
+            if (dia <= diasEnMes) {
+                // El día existe en este mes
+                const fecha = new Date(anio, mes - 1, dia);
+                const diaSemana = fecha.getDay();
+                nombreDiaElement.textContent = diasSemana[diaSemana];
+                headerCell.style.display = '';
+            } else {
+                // El día no existe en este mes
+                headerCell.style.display = 'none';
+            }
+        }
+    }
+
+    function actualizarCalendario(data) {
+        const tbody = document.getElementById('calendario-body');
+        tbody.innerHTML = '';
+        limpiarSeleccion();
+
+        // Actualizar colores de headers (domingos y festivos)
+        if (data.calendario) {
+            data.calendario.forEach(diaInfo => {
+                const headerCell = document.getElementById(`dia-header-${diaInfo.dia}`);
+                if (headerCell) {
+                    if (diaInfo.es_festivo || diaInfo.es_domingo) {
+                        headerCell.classList.add('bg-light-danger', 'text-danger');
+                    } else {
+                        headerCell.classList.remove('bg-light-danger', 'text-danger');
+                    }
+                }
+            });
+        }
+
+        // Obtener días en el mes
+        const diasEnMes = data.calendario.length;
+
+        // Si no hay operadores, mostrar mensaje
+        if (!data.operadores || data.operadores.length === 0) {
+            const colspan = diasEnMes + 1;
+            tbody.innerHTML = `<tr><td colspan="${colspan}" class="text-center text-muted py-5">No hay operadores activos con rol de operador de centro de cómputo</td></tr>`;
+            return;
+        }
+
+        // Crear filas para cada operador
+        data.operadores.forEach(empleado => {
+            const row = document.createElement('tr');
+            row.dataset.empleadoId = empleado.id;
+
+            // Columna del nombre del operador
+            const cellEmpleado = document.createElement('td');
+            cellEmpleado.className = 'empleado-nombre';
+            cellEmpleado.textContent = `${empleado.username} - ${empleado.nombre}`;
+            row.appendChild(cellEmpleado);
+
+            // Columnas solo para los días que existen en el mes
+            data.calendario.forEach((diaInfo, index) => {
+                const cell = document.createElement('td');
+                const fecha = diaInfo.fecha;
+                const turno = empleado.turnos[fecha];
+
+                cell.dataset.empleadoId = empleado.id;
+                cell.dataset.fecha = fecha;
+                cell.dataset.dia = diaInfo.dia;
+
+                if (turno) {
+                    // Hay un turno para este día
+                    const claseEstado = turno.estado === 'trabajado' ? 'trabajado' : 'programado';
+                    const claseTurno = obtenerClaseTurno(turno.tipo_turno);
+
+                    cell.className = `turno-cell ${claseTurno} ${claseEstado}`;
+                    cell.dataset.turnoId = turno.id;
+                    cell.textContent = turno.tipo_turno;
+
+                    // Tooltip con horas calculadas reales
+                    const total = parseFloat(turno.TOTAL || 0);
+                    let tooltipLines = [`Turno: ${turno.tipo_turno}`, `Estado: ${turno.estado}`];
+                    tooltipLines.push(`Horas trabajadas: ${total}h`);
+                    if (parseFloat(turno.HOD || 0) > 0) tooltipLines.push(`• HOD: ${turno.HOD}h`);
+                    if (parseFloat(turno.RNO || 0) > 0) tooltipLines.push(`• RNO: ${turno.RNO}h`);
+                    if (parseFloat(turno.RDF || 0) > 0) tooltipLines.push(`• RDF: ${turno.RDF}h`);
+                    if (parseFloat(turno.RNF || 0) > 0) tooltipLines.push(`• RNF: ${turno.RNF}h`);
+                    cell.title = tooltipLines.join('\n');
+                } else {
+
+                    // No hay turno para este día
+                    let claseEspecial = '';
+                    if (diaInfo.es_festivo) {
+                        claseEspecial = 'dia-festivo';
+                    } else if (diaInfo.es_domingo) {
+                        claseEspecial = 'dia-domingo';
+                    }
+                    cell.className = `turno-cell vacia ${claseEspecial}`;
+                }
+
+                row.appendChild(cell);
+            });
+
+            // Rellenar con celdas vacías para los días que no existen (de diasEnMes+1 hasta 31)
+            for (let dia = diasEnMes + 1; dia <= 31; dia++) {
+                const cell = document.createElement('td');
+                cell.className = 'turno-cell no-existe';
+                cell.style.display = 'none';
+                row.appendChild(cell);
+            }
+
+            tbody.appendChild(row);
+        });
+    }
+
+    // Obtener clase CSS según el tipo de turno
+    function obtenerClaseTurno(codigoTurno) {
+        const codigo = codigoTurno.toUpperCase().trim();
+
+        // Apoyo-A (13:00-21:00 Lun-Vie)
+        if (codigo.includes('APOYO') || codigo === 'APOYO-A') {
+            return 'turno-apoyo';
+        }
+        // Turno 1-M (06:00-14:00)
+        else if (codigo.includes('TURNO 1') || codigo === '1-M' || codigo.includes('MAÑANA') || codigo.includes('MANANA')) {
+            return 'turno-1-m';
+        }
+        // Turno 2-T (14:00-22:00)
+        else if (codigo.includes('TURNO 2') || codigo === '2-T' || codigo.includes('TARDE')) {
+            return 'turno-2-t';
+        }
+        // Turno 3-N (22:00-06:00)
+        else if (codigo.includes('TURNO 3') || codigo === '3-N' || codigo.includes('NOCHE')) {
+            return 'turno-3-n';
+        }
+        // Des o Permi-D
+        else if (codigo.includes('DESC') || codigo.includes('PERM') || codigo === 'D' || codigo.includes('DES O PERMI')) {
+            return 'turno-descanso';
+        }
+
+        return 'turno-otro';
+    }
+
+    // Manejar selección de celdas
+    function manejarClickCelda(e) {
+        const cell = e.target.closest('td.turno-cell');
+        if (!cell || cell.classList.contains('no-existe')) return;
+
+        const empleadoId = cell.dataset.empleadoId;
+        const fecha = cell.dataset.fecha;
+
+        if (!empleadoId || !fecha) return;
+
+        // Permitir seleccionar celdas con turno para editarlas en el modal
+        // if (cell.dataset.turnoId && !e.ctrlKey && !e.metaKey) {
+        //    const turnoId = cell.dataset.turnoId;
+        //    window.location.href = `{% url 'horas_extras:editar_turno' 0 %}`.replace('0', turnoId);
+        //    return;
+        // }
+
+        // Modo selección múltiple con Ctrl/Cmd o celdas vacías
+        toggleSeleccionCelda(cell, empleadoId, fecha);
+    }
+
+    function toggleSeleccionCelda(cell, empleadoId, fecha) {
+        const key = `${empleadoId}-${fecha}`;
+
+        if (cell.classList.contains('seleccionada')) {
+            // Deseleccionar
+            cell.classList.remove('seleccionada');
+            celdasSeleccionadas.delete(key);
+        } else {
+            // Seleccionar
+            cell.classList.add('seleccionada');
+            celdasSeleccionadas.set(key, {
+                cell: cell,
+                empleadoId: empleadoId,
+                fecha: fecha,
+                dia: cell.dataset.dia
+            });
+        }
+
+        actualizarBarraAcciones();
+    }
+
+    function abrirModalAsignarTurnos() {
+        if (celdasSeleccionadas.size === 0) {
+            alert('Por favor seleccione al menos un día');
+            return;
+        }
+
+        // Verificar que todas las celdas sean del mismo empleado
+        const empleadosUnicos = new Set();
+        celdasSeleccionadas.forEach(item => {
+            empleadosUnicos.add(item.empleadoId);
+        });
+
+        if (empleadosUnicos.size > 1) {
+            alert('Por favor seleccione días de un solo empleado a la vez');
+            return;
+        }
+
+        // Obtener datos del empleado
+        const primeraSeleccion = celdasSeleccionadas.values().next().value;
+        const empleadoId = primeraSeleccion.empleadoId;
+        const row = document.querySelector(`tr[data-empleado-id="${empleadoId}"]`);
+        const nombreEmpleado = row.querySelector('.empleado-nombre').textContent;
+
+        // Llenar el modal
+        document.getElementById('modal-empleado-id').value = empleadoId;
+        document.getElementById('modal-empleado-nombre').value = nombreEmpleado;
+
+        // Mostrar días seleccionados
+        const diasContainer = document.getElementById('modal-dias-seleccionados');
+        const fechasArray = Array.from(celdasSeleccionadas.values());
+        fechasArray.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+        diasContainer.innerHTML = fechasArray.map(item => {
+            const fecha = new Date(item.fecha);
+            const opciones = { day: '2-digit', month: 'long', year: 'numeric' };
+            return `<div class="badge bg-primary me-2 mb-2">${fecha.toLocaleDateString('es-CO', opciones)}</div>`;
+        }).join('');
+
+        // Limpiar alerta y formulario
+        document.getElementById('modal-alert').style.display = 'none';
+        document.getElementById('modal-tipo-turno').value = '';
+        document.getElementById('modal-tipo-turno').value = '';
+
+        // Verificar si alguna celda seleccionada ya tiene turno para marcar sobrescribir automáticamente
+        const hayTurnosExistentes = Array.from(celdasSeleccionadas.values()).some(item => {
+            return item.cell.dataset.turnoId;
+        });
+        document.getElementById('modal-sobrescribir').checked = hayTurnosExistentes;
+
+        // Abrir modal
+        const modal = new bootstrap.Modal(document.getElementById('modalAsignarTurnos'));
+        modal.show();
+    }
+
+    function guardarTurnos() {
+        const empleadoId = document.getElementById('modal-empleado-id').value;
+        const tipoTurnoId = document.getElementById('modal-tipo-turno').value;
+        const sobrescribir = document.getElementById('modal-sobrescribir').checked;
+
+        if (!tipoTurnoId) {
+            mostrarAlerta('Por favor seleccione un tipo de turno', 'warning');
+            return;
+        }
+
+        const fechas = Array.from(celdasSeleccionadas.values()).map(item => item.fecha);
+
+        // Mostrar spinner
+        const btnGuardar = document.getElementById('btn-guardar-turnos');
+        const spinner = document.getElementById('spinner-guardar');
+        btnGuardar.disabled = true;
+        spinner.classList.remove('d-none');
+
+        // Obtener CSRF token
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+            document.cookie.match(/csrftoken=([^;]+)/)?.[1];
+
+        fetch('{% url "horas_extras:ajax_asignar_turnos" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify({
+                operador_id: empleadoId,
+                fechas: fechas,
+                tipo_turno_id: tipoTurnoId,
+                sobrescribir: sobrescribir
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    let mensaje = `Turnos asignados exitosamente:\n`;
+                    mensaje += `- Creados: ${data.turnos_creados}\n`;
+                    mensaje += `- Actualizados: ${data.turnos_actualizados}\n`;
+                    if (data.turnos_existentes > 0) {
+                        mensaje += `- Existentes (no sobrescritos): ${data.turnos_existentes}\n`;
+                    }
+                    if (data.errores.length > 0) {
+                        mensaje += `\nErrores:\n${data.errores.join('\n')}`;
+                    }
+
+                    mostrarAlerta(mensaje, 'success');
+
+                    // Recargar calendario después de 2 segundos
+                    setTimeout(() => {
+                        bootstrap.Modal.getInstance(document.getElementById('modalAsignarTurnos')).hide();
+                        cargarCalendario();
+                    }, 2000);
+                } else {
+                    mostrarAlerta('Error: ' + data.error, 'danger');
+                }
+            })
+            .catch(error => {
+                mostrarAlerta('Error al guardar turnos: ' + error, 'danger');
+            })
+            .finally(() => {
+                btnGuardar.disabled = false;
+                spinner.classList.add('d-none');
+            });
+    }
+
+    function mostrarAlerta(mensaje, tipo) {
+        const alertDiv = document.getElementById('modal-alert');
+        alertDiv.className = `alert alert-${tipo}`;
+        alertDiv.style.display = 'block';
+        alertDiv.textContent = mensaje;
+    }
+
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', function () {
+        const mesActual = new Date().getMonth() + 1;
+        document.getElementById('mes-select').value = mesActual;
+        cargarCalendario();
+
+        // Click en celdas del calendario
+        document.getElementById('calendario-body').addEventListener('click', manejarClickCelda);
+
+        // Botón para abrir modal de asignación
+        document.getElementById('btn-guardar-turnos').addEventListener('click', guardarTurnos);
+    });
+
+    // Atajo de teclado: Enter para abrir modal de asignación
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && celdasSeleccionadas.size > 0) {
+            abrirModalAsignarTurnos();
+        }
+        if (e.key === 'Escape') {
+            limpiarSeleccion();
+        }
+    });
+</script>
+{% endblock %}

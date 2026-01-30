@@ -16,12 +16,13 @@ def redirect_to_dashboard(request):
 urlpatterns = [
     # Página principal
     path('', redirect_to_dashboard, name='home'),
-    
+
     # Apps principales
     path('auth/', include('authentication.urls', namespace='authentication')),
     path('reportes/', include('reportes.urls', namespace='reportes')),
     path('users/', include('apps.user_management.urls', namespace='user_management')),
-    
+    path('recargos/', include('apps.horas_extras.urls', namespace='horas_extras')),
+
     # Admin de Django
     path('admin/', admin.site.urls),
 ]

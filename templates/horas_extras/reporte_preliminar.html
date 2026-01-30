@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="d-flex flex-column flex-column-fluid">
+    <!-- Toolbar -->
+    <div id="kt_app_toolbar" class="app-toolbar py-3 py-lg-6">
+        <div id="kt_app_toolbar_container" class="app-container container-fluid d-flex flex-stack">
+            <div class="page-title d-flex flex-column justify-content-center flex-wrap me-3">
+                <h1 class="page-heading d-flex text-dark fw-bold fs-3 flex-column justify-content-center my-0">
+                    Reporte Preliminar de Nómina (Colombia)
+                </h1>
+                <ul class="breadcrumb breadcrumb-separatorless fw-semibold fs-7 my-0 pt-1">
+                    <li class="breadcrumb-item text-muted">Recargos</li>
+                    <li class="breadcrumb-item"><span class="bullet bg-gray-400 w-5px h-2px"></span></li>
+                    <li class="breadcrumb-item text-muted">Reporte Preliminar</li>
+                </ul>
+            </div>
+
+            <!-- Filtro Mes/Año -->
+            <div class="d-flex align-items-center gap-2 gap-lg-3">
+                <form method="get" class="d-flex gap-2">
+                    <select name="mes" class="form-select form-select-sm" onchange="this.form.submit()">
+                        {% for m_num, m_nom in meses %}
+                        <option value="{{ m_num }}" {% if m_num==mes %}selected{% endif %}>{{ m_nom }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="ano" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="{{ ano|add:'-1' }}">{{ ano|add:'-1' }}</option>
+                        <option value="{{ ano }}" selected>{{ ano }}</option>
+                        <option value="{{ ano|add:'1' }}">{{ ano|add:'1' }}</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div id="kt_app_content" class="app-content flex-column-fluid">
+        <div id="kt_app_content_container" class="app-container container-fluid">
+
+            {% if datos %}
+            {% for op in datos %}
+            <div class="card mb-5">
+                <div class="card-header border-0 pt-5">
+                    <h3 class="card-title align-items-start flex-column">
+                        <span class="card-label fw-bold fs-3 text-dark">{{ op.nombre }}</span>
+                        <span class="text-muted mt-1 fw-semibold fs-7">ID: {{ op.id }}</span>
+                    </h3>
+                    <div class="card-toolbar">
+                        <!-- Totales Badge -->
+                        <span class="badge badge-light-primary fw-bold me-auto px-4 py-3">
+                            Total Horas: {{ op.totales.TOTAL }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body py-3">
+                    <div class="table-responsive">
+                        <table class="table table-row-dashed table-row-gray-300 align-middle gs-0 gy-4">
+                            <thead>
+                                <tr class="fw-bold text-muted">
+                                    <th class="min-w-100px">Fecha</th>
+                                    <th class="min-w-100px">Día</th>
+                                    <th class="min-w-100px">Turno</th>
+                                    <th class="min-w-50px text-center">HOD</th>
+                                    <th class="min-w-50px text-center">RNO</th>
+                                    <th class="min-w-50px text-center">RDF</th>
+                                    <th class="min-w-50px text-center">RNF</th>
+                                    <th class="min-w-50px text-end">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for dia in op.dias %}
+                                <tr class="{% if dia.turno == 'Descanso' %}bg-light-secondary{% endif %}">
+                                    <td>{{ dia.fecha|date:"d/m/Y" }}</td>
+                                    <td>{{ dia.fecha|date:"l" }}</td>
+                                    <td>
+                                        {% if dia.turno != 'Descanso' %}
+                                        <span class="badge badge-light-success">{{ dia.turno }}</span>
+                                        {% else %}
+                                        <span class="text-muted">Descanso</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">{{ dia.horas.HOD }}</td>
+                                    <td class="text-center">{{ dia.horas.RNO }}</td>
+                                    <td class="text-center">{{ dia.horas.RDF }}</td>
+                                    <td class="text-center">{{ dia.horas.RNF }}</td>
+                                    <td class="text-end fw-bold">{{ dia.horas.TOTAL }}</td>
+                                </tr>
+                                {% endfor %}
+                                <!-- Fila de Totales -->
+                                <tr class="bg-light fw-bold border-top-2 border-secondary">
+                                    <td colspan="3" class="text-end text-dark fs-6">TOTALES {{ op.nombre|upper }}</td>
+                                    <td class="text-center text-primary fs-6">{{ op.totales.HOD }}</td>
+                                    <td class="text-center text-primary fs-6">{{ op.totales.RNO }}</td>
+                                    <td class="text-center text-primary fs-6">{{ op.totales.RDF }}</td>
+                                    <td class="text-center text-primary fs-6">{{ op.totales.RNF }}</td>
+                                    <td class="text-end text-dark fs-5">{{ op.totales.TOTAL }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="alert alert-warning">
+                No se encontraron datos para el periodo seleccionado.
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+{% endblock %}

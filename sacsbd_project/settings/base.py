@@ -2,6 +2,19 @@
 # Configuración SACSBD con Metronic/Heon Theme
 
 import os
+import sys
+
+# Calcular Raíz del Proyecto (subir 3 niveles desde settings/base.py)
+# base.py -> settings -> sacsbd_project -> sacsbd (root)
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Agregar librería local 'holidays' al path (para entornos sin pip)
+HOLIDAYS_LIB_PATH = os.path.join(PROJECT_ROOT, 'holidays-dev')
+if HOLIDAYS_LIB_PATH not in sys.path:
+    sys.path.insert(0, HOLIDAYS_LIB_PATH)
+
+
+
 from pathlib import Path
 from dotenv import load_dotenv
 import sys
@@ -39,6 +52,7 @@ LOCAL_APPS = [
     "apps.reportes",
     "apps.dashboard",
     "apps.user_management",
+    "apps.horas_extras",  # Módulo de gestión de turnos y recargos
     # "apps.server_monitoring",
     # "apps.backup_management",
     # "core",
@@ -91,13 +105,25 @@ DATABASES = {
         "ENGINE": "mssql",
         "NAME": "sacs_bd",
         "USER": "oejaramillop1",
-        "PASSWORD": "O2c4r793@J4r4#2062*",
-        "HOST": "DESKTOP-7GB1M4M\SACSBD24",  # Con instancia
+        "PASSWORD": "O2c4r793@J4r4#2065*",
+        "HOST": r"DESKTOP-7GB1M4M\SACSBD24",  # Con instancia (raw string)
         "PORT": "",  # Puerto vacío
         "OPTIONS": {
             "driver": "ODBC Driver 17 for SQL Server",
             "extra_params": "TrustServerCertificate=yes;",
         },
+    }
+}
+
+# Cache configuration - Optimización de rendimiento
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'sacsbd-cache',
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,  # Máximo de entradas en caché
+        },
+        'TIMEOUT': 300,  # Timeout por defecto: 5 minutos
     }
 }
 
@@ -167,7 +193,8 @@ LOGOUT_REDIRECT_URL = '/auth/login/'
 SESSION_COOKIE_AGE = 1209600  # 2 semanas
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = not DEBUG
-SESSION_SAVE_EVERY_REQUEST = True
+SESSION_SAVE_EVERY_REQUEST = False  # OPTIMIZACIÓN: Solo guardar cuando se modifique
+SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'  # Usar caché + BD para sesiones
 
 # CSRF protection
 CSRF_COOKIE_HTTPONLY = True
@@ -226,7 +253,7 @@ LOGGING = {
         },
         'apps': {
             'handlers': ['file', 'console'],
-            'level': 'DEBUG',
+            'level': 'INFO',
             'propagate': True,
         },
     },

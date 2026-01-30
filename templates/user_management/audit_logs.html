@@ -302,6 +302,7 @@ code {
 {% endblock %}
 
 {% block reports_extra_js %}
+<script src="{% static 'custom/js/datatables-es.js' %}"></script>
 <script>
 // Datos de ejemplo para los detalles del log (en producción vendría del servidor)
 const logsData = {
@@ -323,9 +324,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Inicializar DataTable
     if (document.getElementById('logsTable')) {
         $('#logsTable').DataTable({
-            "language": {
-                "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
-            },
+            "language": DataTablesSpanish,
             "pageLength": 50,
             "responsive": true,
             "order": [[ 0, "desc" ]], // Ordenar por fecha descendente

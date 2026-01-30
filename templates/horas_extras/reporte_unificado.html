@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="d-flex flex-column flex-column-fluid">
+    <div id="kt_app_toolbar" class="app-toolbar py-3 py-lg-6">
+        <div id="kt_app_toolbar_container" class="app-container container-fluid d-flex flex-stack">
+            <div class="page-title d-flex flex-column justify-content-center flex-wrap me-3">
+                <h1 class="page-heading d-flex text-dark fw-bold fs-3 flex-column justify-content-center my-0">Reportes
+                    de Horas Extras y Recargos</h1>
+                <ul class="breadcrumb breadcrumb-separatorless fw-semibold fs-7 my-0 pt-1">
+                    <li class="breadcrumb-item text-muted">Recargos</li>
+                    <li class="breadcrumb-item"><span class="bullet bg-gray-400 w-5px h-2px"></span></li>
+                    <li class="breadcrumb-item text-muted">Reportes Unificado</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div id="kt_app_content" class="app-content flex-column-fluid">
+        <div id="kt_app_content_container" class="app-container container-fluid">
+
+            <!-- Filtros -->
+            <div class="card mb-5">
+                <div class="card-header">
+                    <h3 class="card-title">Generar Reporte</h3>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="row align-items-end">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label required">{{ form.tipo_reporte.label }}</label>
+                            {{ form.tipo_reporte }}
+                        </div>
+                        <div class="col-md-3 mb-3" id="div_operador">
+                            <label class="form-label">{{ form.operador_id.label }}</label>
+                            {{ form.operador_id }}
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label class="form-label required">{{ form.mes.label }}</label>
+                            {{ form.mes }}
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label class="form-label required">{{ form.ano.label }}</label>
+                            {{ form.ano }}
+                        </div>
+                        <div class="col-md-2 mb-3 d-flex justify-content-end gap-2">
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="fas fa-search me-2"></i> Generar
+                            </button>
+                            {% if datos %}
+                            <a href="{% url 'horas_extras:exportar_excel' %}?{{ request.GET.urlencode }}"
+                                class="btn btn-success btn-sm" title="Exportar a Excel">
+                                <i class="fas fa-file-excel me-1"></i> Excel
+                            </a>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% if datos %}
+
+            <!-- Tarjetas Resumen Global -->
+            <div class="row g-5 g-xl-8 mb-5">
+                <div class="col-xl-3">
+                    <div class="card bg-primary text-white card-xl-stretch mb-xl-8">
+                        <div class="card-body my-3">
+                            <span class="fw-bold fs-6 d-block lh-1">TOTAL HORAS</span>
+                            <span class="fw-bold fs-2x d-block mt-3">{{ totales_generales.TOTAL }}</span>
+                            <span class="fw-semibold fs-7 d-block mt-1">Total acumulado del mes</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-9">
+                    <div class="row g-5">
+                        <div class="col-md-3">
+                            <div class="card bg-light card-xl-stretch mb-xl-8 border border-primary border-dashed">
+                                <div class="card-body my-2 p-4">
+                                    <span class="text-gray-800 fw-bold fs-6 d-block">Ordinarias (HOD)</span>
+                                    <span class="text-primary fw-bold fs-2x d-block mt-2">{{ totales_generales.HOD }}</span>
+                                    <span class="text-gray-600 fw-semibold fs-8 d-block mt-1">Hora Base</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-light-warning card-xl-stretch mb-xl-8">
+                                <div class="card-body my-2 p-4">
+                                    <span class="text-gray-800 fw-bold fs-6 d-block">Rec. Nocturno</span>
+                                    <span class="text-warning fw-bold fs-2x d-block mt-2">{{ totales_generales.RNO }}</span>
+                                    <span class="text-gray-600 fw-semibold fs-8 d-block mt-1">Recargo {{ porcentajes.RNO }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-light-danger card-xl-stretch mb-xl-8">
+                                <div class="card-body my-2 p-4">
+                                    <span class="text-gray-800 fw-bold fs-6 d-block">Rec. Festivo</span>
+                                    <span class="text-danger fw-bold fs-2x d-block mt-2">{{ totales_generales.RDF }}</span>
+                                    <span class="text-gray-600 fw-semibold fs-8 d-block mt-1">Recargo {{ porcentajes.RDF }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-light-success card-xl-stretch mb-xl-8">
+                                <div class="card-body my-2 p-4">
+                                    <span class="text-gray-800 fw-bold fs-6 d-block">Rec. Noc. Fest</span>
+                                    <span class="text-success fw-bold fs-2x d-block mt-2">{{ totales_generales.RNF }}</span>
+                                    <span class="text-gray-600 fw-semibold fs-8 d-block mt-1">Recargo {{ porcentajes.RNF }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detalle por Operador -->
+            {% for op in datos %}
+            <div class="card mb-5">
+                <div class="card-header border-0 pt-5">
+                    <h3 class="card-title align-items-start flex-column">
+                        <span class="card-label fw-bold fs-3 text-dark">{{ op.nombre }}</span>
+                        <span class="text-muted mt-1 fw-semibold fs-7">ID: {{ op.id }}</span>
+                    </h3>
+                    <div class="card-toolbar">
+                        <span class="badge badge-light-success fw-bold me-2 px-4 py-3">Total: {{ op.totales.TOTAL }}</span>
+                    </div>
+                </div>
+                <div class="card-body py-3">
+                    <div class="table-responsive">
+                        <table class="table table-row-dashed table-row-gray-300 align-middle gs-0 gy-4">
+                            <thead>
+                                <tr class="fw-bold text-muted">
+                                    <th class="min-w-100px">Fecha</th>
+                                    <th class="min-w-100px">Dia</th>
+                                    <th class="min-w-100px">Turno</th>
+                                    <th class="min-w-50px text-center">HOD</th>
+                                    <th class="min-w-50px text-center">RNO</th>
+                                    <th class="min-w-50px text-center">RDF</th>
+                                    <th class="min-w-50px text-center">RNF</th>
+                                    <th class="min-w-50px text-end">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for dia in op.dias %}
+                                <tr class="{% if dia.es_festivo %}bg-light-danger text-danger fw-bold{% endif %}">
+                                    <td>{{ dia.fecha|date:"d/m/Y" }}</td>
+                                    <td>{{ dia.fecha|date:"l" }}</td>
+                                    <td>
+                                        {% if dia.turno != 'Descanso' %}
+                                        <span class="badge badge-light-success">{{ dia.turno }}</span>
+                                        {% else %}
+                                        <span class="text-muted">Descanso</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">{{ dia.horas.HOD }}</td>
+                                    <td class="text-center">{{ dia.horas.RNO }}</td>
+                                    <td class="text-center">{{ dia.horas.RDF }}</td>
+                                    <td class="text-center">{{ dia.horas.RNF }}</td>
+                                    <td class="text-end fw-bold">{{ dia.horas.TOTAL }}</td>
+                                </tr>
+                                {% endfor %}
+                                <tr class="bg-light fw-bold border-top-2 border-secondary">
+                                    <td colspan="3" class="text-end text-dark fs-6">TOTALES</td>
+                                    <td class="text-center text-primary fs-6">{{ op.totales.HOD }}</td>
+                                    <td class="text-center text-primary fs-6">{{ op.totales.RNO }}</td>
+                                    <td class="text-center text-primary fs-6">{{ op.totales.RDF }}</td>
+                                    <td class="text-center text-primary fs-6">{{ op.totales.RNF }}</td>
+                                    <td class="text-end text-dark fs-5">{{ op.totales.TOTAL }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            {% endif %}
+
+            {% if not datos and request.GET %}
+            <div class="alert alert-info">No se encontraron registros para los filtros seleccionados.</div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const selectTipo = document.querySelector('select[name="tipo_reporte"]');
+        const divOperador = document.getElementById('div_operador');
+
+        function toggleOperador() {
+            if (selectTipo && divOperador) {
+                divOperador.style.display = selectTipo.value === 'individual' ? 'block' : 'none';
+            }
+        }
+
+        if (selectTipo) {
+            selectTipo.addEventListener('change', toggleOperador);
+            toggleOperador();
+        }
+    });
+</script>
+{% endblock %}

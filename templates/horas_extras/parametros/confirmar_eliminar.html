@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Eliminar Parámetro - SACSBD{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            {% for item in breadcrumb %}
+            {% if item.url %}
+            <li class="breadcrumb-item"><a href="{{ item.url }}">{{ item.titulo }}</a></li>
+            {% else %}
+            <li class="breadcrumb-item active">{{ item.titulo }}</li>
+            {% endif %}
+            {% endfor %}
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="fas fa-exclamation-triangle text-danger"></i> {{ titulo }}</h2>
+        </div>
+    </div>
+
+    <!-- Confirmación -->
+    <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">⚠️ ADVERTENCIA: Esta acción no se puede deshacer</h5>
+        </div>
+        <div class="card-body">
+            <p class="lead">
+                ¿Estás seguro de que deseas eliminar el siguiente parámetro normativo?
+            </p>
+
+            <div class="alert alert-light">
+                <dl class="row mb-0">
+                    <dt class="col-sm-3">Vigencia desde:</dt>
+                    <dd class="col-sm-9">{{ parametro.vigencia_desde }}</dd>
+
+                    <dt class="col-sm-3">Vigencia hasta:</dt>
+                    <dd class="col-sm-9">
+                        {% if parametro.vigencia_hasta %}
+                        {{ parametro.vigencia_hasta }}
+                        {% else %}
+                        <span class="text-muted">Indefinida</span>
+                        {% endif %}
+                    </dd>
+
+                    <dt class="col-sm-3">Descripción:</dt>
+                    <dd class="col-sm-9">{{ parametro.descripcion|default:"Sin descripción" }}</dd>
+
+                    <dt class="col-sm-3">Hora nocturno:</dt>
+                    <dd class="col-sm-9">{{ parametro.hora_inicio_nocturno }} - {{ parametro.hora_fin_nocturno }}</dd>
+                </dl>
+            </div>
+
+            <div class="alert alert-warning">
+                <h6><i class="fas fa-exclamation-circle"></i> Consideraciones Importantes:</h6>
+                <ul class="mb-0">
+                    <li>Si este parámetro está vigente actualmente, los cálculos de horas podrían verse afectados.</li>
+                    <li>Los turnos ya generados con este parámetro NO se recalcularán automáticamente.</li>
+                    <li>Considera desactivar en lugar de eliminar para mantener el histórico.</li>
+                </ul>
+            </div>
+
+            <form method="post" class="mt-4">
+                {% csrf_token %}
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Sí, eliminar parámetro
+                    </button>
+                    <a href="{% url 'horas_extras:listar_parametros_normativos' %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> No, cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -269,6 +269,55 @@
                                             </div>
                                         </div>
                                     </div>
+
+                                    <!-- Recargos -->
+                                    <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
+                                        <span class="menu-link">
+                                            <span class="menu-icon">
+                                                <i class="ki-duotone ki-calendar-8 fs-2">
+                                                    <span class="path1"></span>
+                                                    <span class="path2"></span>
+                                                    <span class="path3"></span>
+                                                    <span class="path4"></span>
+                                                    <span class="path5"></span>
+                                                    <span class="path6"></span>
+                                                </i>
+                                            </span>
+                                            <span class="menu-title">Recargos</span>
+                                            <span class="menu-arrow"></span>
+                                        </span>
+                                        <div class="menu-sub menu-sub-accordion">
+                                            <div class="menu-item">
+                                                <a class="menu-link"
+                                                    href="{% url 'horas_extras:calendario_asignacion' %}">
+                                                    <span class="menu-bullet">
+                                                        <span class="bullet bullet-dot"></span>
+                                                    </span>
+                                                    <span class="menu-title">Calendario de Asignación</span>
+                                                </a>
+                                            </div>
+                                            <div class="menu-item">
+                                                <a class="menu-link" href="{% url 'horas_extras:reportes' %}">
+                                                    <span class="menu-bullet">
+                                                        <span class="bullet bullet-dot"></span>
+                                                    </span>
+                                                    <span class="menu-title">Reportes</span>
+                                                </a>
+                                            </div>
+                                            <div class="menu-item">
+                                                <a class="menu-link"
+                                                    href="{% url 'horas_extras:listar_parametros_normativos' %}">
+                                                    <span class="menu-bullet">
+                                                        <span class="bullet bullet-dot"></span>
+                                                    </span>
+                                                    <span class="menu-title">Parámetros Normativos</span>
+                                                </a>
+                                            </div>
+
+                                        </div>
+                                    </div>
+
+
                                     <!-- Reportes -->
                                     <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
                                         <span class="menu-link">
@@ -394,18 +443,10 @@
                             class="app-container container-fluid d-flex flex-column flex-md-row flex-center flex-md-stack py-3">
                             <div class="text-dark order-2 order-md-1">
                                 <span class="text-muted fw-semibold me-1">{{ current_year }}© Sacs_bd</span>
-                                <a href="#" target="_blank" class="text-gray-800 text-hover-primary">{{ company_name
-                                    }}</a>
+                                <a href="#" target="_blank" class="text-gray-800 text-hover-primary">HeOn Health online
+                                    S.A.
+                                </a>
                             </div>
-
-                            <ul class="menu menu-gray-600 menu-hover-primary fw-semibold order-1">
-                                <li class="menu-item">
-                                    <a href="#" target="_blank" class="menu-link px-2">Acerca de</a>
-                                </li>
-                                <li class="menu-item">
-                                    <a href="#" target="_blank" class="menu-link px-2">Soporte</a>
-                                </li>
-                            </ul>
                         </div>
                     </div>
                 </div>

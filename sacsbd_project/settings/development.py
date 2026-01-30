@@ -20,7 +20,7 @@ DATABASES = {
         "ENGINE": "mssql",
         "NAME": "sacs_bd",
         "USER": "oejaramillop1",
-        "PASSWORD": "O2c4r793@J4r4#2062*",
+        "PASSWORD": "O2c4r793@J4r4#2065*",
         "HOST": "DESKTOP-7GB1M4M\SACSBD24",  # Con instancia
         "PORT": "",  # Puerto vacío
         "OPTIONS": {
