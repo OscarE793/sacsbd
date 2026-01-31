@@ -112,6 +112,13 @@ class ParametroNormativo(models.Model):
         default=12,
         help_text='Máximo de horas extra autorizadas por semana'
     )
+
+    # === CONFIGURACIÓN FLEXIBLE DE TURNOS (JSON) ===
+    configuracion_turnos = models.TextField(
+        default="{}",
+        blank=True,
+        help_text="JSON para sobrescribir horarios. Ej: {'M': {'semana': ['06:00', '13:00']}}"
+    )
     
     # === METADATA ===
     descripcion = models.TextField(
@@ -167,6 +174,16 @@ class ParametroNormativo(models.Model):
             return hora >= inicio or hora < fin
         else:
             return inicio <= hora < fin
+
+    def save(self, *args, **kwargs):
+        """
+        Sobrescribe save para garantizar la consistencia legal:
+        RNF = RNO + RDF (Siempre)
+        """
+        # Calcular RNF automáticamente
+        self.recargo_nocturno_festivo = self.recargo_nocturno + self.recargo_dominical_festivo
+        
+        super().save(*args, **kwargs)
 
 
 class PoliticaEmpresa(models.Model):

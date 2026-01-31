@@ -186,6 +186,320 @@
             </div>
         </div>
 
+        <!-- Configuración Flexible de Turnos -->
+        <div class="card mt-3">
+            <div class="card-header bg-warning d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-dark"><i class="fas fa-cogs"></i> Configuración de Horarios por Turno y Día</h5>
+                <small class="text-dark">Seleccione el día específico y las horas a modificar</small>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    Configure aquí las horas personalizadas para cada turno y día de la semana.
+                    <strong>Deje en blanco para usar el horario estándar del sistema.</strong>
+                </div>
+
+                <!-- Turno M (Mañana) -->
+                <div class="accordion" id="accordionTurnos">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button bg-primary text-white" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#collapseM">
+                                <i class="fas fa-sun me-2"></i> Turno Mañana (M)
+                            </button>
+                        </h2>
+                        <div id="collapseM" class="accordion-collapse collapse show" data-bs-parent="#accordionTurnos">
+                            <div class="accordion-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-sm">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Día</th>
+                                                <th>Entrada</th>
+                                                <th>Salida</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Lunes</td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="M" data-dia="lunes" data-campo="inicio"></td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="M" data-dia="lunes" data-campo="fin"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Martes</td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="M" data-dia="martes" data-campo="inicio"></td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="M" data-dia="martes" data-campo="fin"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Miércoles</td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="M" data-dia="miercoles" data-campo="inicio"></td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="M" data-dia="miercoles" data-campo="fin"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Jueves</td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="M" data-dia="jueves" data-campo="inicio"></td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="M" data-dia="jueves" data-campo="fin"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Viernes</td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="M" data-dia="viernes" data-campo="inicio"></td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="M" data-dia="viernes" data-campo="fin"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Sábado</td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="M" data-dia="sabado" data-campo="inicio"></td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="M" data-dia="sabado" data-campo="fin"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Domingo</td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="M" data-dia="domingo" data-campo="inicio"></td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="M" data-dia="domingo" data-campo="fin"></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Turno T (Tarde) -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed bg-success text-white" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#collapseT">
+                                <i class="fas fa-cloud-sun me-2"></i> Turno Tarde (T)
+                            </button>
+                        </h2>
+                        <div id="collapseT" class="accordion-collapse collapse" data-bs-parent="#accordionTurnos">
+                            <div class="accordion-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-sm">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Día</th>
+                                                <th>Entrada</th>
+                                                <th>Salida</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Lunes</td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="T" data-dia="lunes" data-campo="inicio"></td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="T" data-dia="lunes" data-campo="fin"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Martes</td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="T" data-dia="martes" data-campo="inicio"></td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="T" data-dia="martes" data-campo="fin"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Miércoles</td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="T" data-dia="miercoles" data-campo="inicio"></td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="T" data-dia="miercoles" data-campo="fin"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Jueves</td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="T" data-dia="jueves" data-campo="inicio"></td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="T" data-dia="jueves" data-campo="fin"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Viernes</td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="T" data-dia="viernes" data-campo="inicio"></td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="T" data-dia="viernes" data-campo="fin"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Sábado</td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="T" data-dia="sabado" data-campo="inicio"></td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="T" data-dia="sabado" data-campo="fin"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Domingo</td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="T" data-dia="domingo" data-campo="inicio"></td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="T" data-dia="domingo" data-campo="fin"></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Turno A (Apoyo) -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed bg-info text-white" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#collapseA">
+                                <i class="fas fa-hands-helping me-2"></i> Turno Apoyo (A)
+                            </button>
+                        </h2>
+                        <div id="collapseA" class="accordion-collapse collapse" data-bs-parent="#accordionTurnos">
+                            <div class="accordion-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-sm">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Día</th>
+                                                <th>Entrada</th>
+                                                <th>Salida</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Lunes</td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="A" data-dia="lunes" data-campo="inicio"></td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="A" data-dia="lunes" data-campo="fin"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Martes</td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="A" data-dia="martes" data-campo="inicio"></td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="A" data-dia="martes" data-campo="fin"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Miércoles</td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="A" data-dia="miercoles" data-campo="inicio"></td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="A" data-dia="miercoles" data-campo="fin"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Jueves</td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="A" data-dia="jueves" data-campo="inicio"></td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="A" data-dia="jueves" data-campo="fin"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Viernes</td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="A" data-dia="viernes" data-campo="inicio"></td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="A" data-dia="viernes" data-campo="fin"></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <small class="text-muted">Turno A no trabaja Sábados ni Domingos.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Turno N (Noche) -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed bg-dark text-white" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#collapseN">
+                                <i class="fas fa-moon me-2"></i> Turno Noche (N)
+                            </button>
+                        </h2>
+                        <div id="collapseN" class="accordion-collapse collapse" data-bs-parent="#accordionTurnos">
+                            <div class="accordion-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-sm">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Día</th>
+                                                <th>Entrada</th>
+                                                <th>Salida (+1 día)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Lunes</td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="N" data-dia="lunes" data-campo="inicio"></td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="N" data-dia="lunes" data-campo="fin"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Martes</td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="N" data-dia="martes" data-campo="inicio"></td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="N" data-dia="martes" data-campo="fin"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Miércoles</td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="N" data-dia="miercoles" data-campo="inicio"></td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="N" data-dia="miercoles" data-campo="fin"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Jueves</td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="N" data-dia="jueves" data-campo="inicio"></td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="N" data-dia="jueves" data-campo="fin"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Viernes</td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="N" data-dia="viernes" data-campo="inicio"></td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="N" data-dia="viernes" data-campo="fin"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Sábado</td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="N" data-dia="sabado" data-campo="inicio"></td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="N" data-dia="sabado" data-campo="fin"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Domingo</td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="N" data-dia="domingo" data-campo="inicio"></td>
+                                                <td><input type="time" class="form-control form-control-sm turno-dia"
+                                                        data-turno="N" data-dia="domingo" data-campo="fin"></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <small class="text-muted">El horario nocturno cruza medianoche. La salida es al día
+                                        siguiente.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Campo oculto para JSON -->
+                <input type="hidden" name="configuracion_turnos" id="configuracion_turnos_json"
+                    value="{{ form.configuracion_turnos.value|default:'{}' }}">
+            </div>
+        </div>
+
         <!-- Botones -->
         <div class="mt-4">
             <button type="submit" class="btn btn-primary">
@@ -197,4 +511,57 @@
         </div>
     </form>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const jsonField = document.getElementById('configuracion_turnos_json');
+        const timeInputs = document.querySelectorAll('.turno-dia');
+
+        function loadConfig() {
+            try {
+                const config = JSON.parse(jsonField.value || '{}');
+                timeInputs.forEach(input => {
+                    const turno = input.dataset.turno;
+                    const dia = input.dataset.dia;
+                    const campo = input.dataset.campo;
+                    if (config[turno] && config[turno][dia]) {
+                        const valores = config[turno][dia];
+                        if (campo === 'inicio' && valores[0]) input.value = valores[0];
+                        else if (campo === 'fin' && valores[1]) input.value = valores[1];
+                    }
+                });
+            } catch (e) { console.warn('Error parsing config JSON:', e); }
+        }
+
+        function saveConfig() {
+            const config = {};
+            timeInputs.forEach(input => {
+                const turno = input.dataset.turno;
+                const dia = input.dataset.dia;
+                const campo = input.dataset.campo;
+                const valor = input.value;
+                if (valor) {
+                    if (!config[turno]) config[turno] = {};
+                    if (!config[turno][dia]) config[turno][dia] = ['', ''];
+                    if (campo === 'inicio') config[turno][dia][0] = valor;
+                    else if (campo === 'fin') config[turno][dia][1] = valor;
+                }
+            });
+            Object.keys(config).forEach(turno => {
+                Object.keys(config[turno]).forEach(dia => {
+                    const vals = config[turno][dia];
+                    if (!vals[0] || !vals[1]) delete config[turno][dia];
+                });
+                if (Object.keys(config[turno]).length === 0) delete config[turno];
+            });
+            jsonField.value = JSON.stringify(config);
+        }
+
+        timeInputs.forEach(input => input.addEventListener('change', saveConfig));
+        loadConfig();
+        document.querySelector('form').addEventListener('submit', saveConfig);
+    });
+</script>
 {% endblock %}

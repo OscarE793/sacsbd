@@ -921,18 +921,92 @@ class GeneradorTurnosV4:
             if es_sab_dom or es_fest:
                 return []
             rango = cls.RANGOS_TURNO['A']['semana']
+            
+            # LÓGICA FLEXIBLE (JSON en ParametroNormativo) - Soporta por día específico
+            from apps.horas_extras.models_normativo import ParametroNormativo
+            param = ParametroNormativo.obtener_vigente(fecha)
+            if param and param.configuracion_turnos and param.configuracion_turnos != "{}":
+                try:
+                    import json
+                    config = json.loads(param.configuracion_turnos)
+                    if 'A' in config:
+                        dias_semana = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo']
+                        dia_nombre = dias_semana[fecha.weekday()]
+                        if dia_nombre in config['A']:
+                            inicio_str, fin_str = config['A'][dia_nombre]
+                            h_ini, m_ini = map(int, inicio_str.split(':'))
+                            h_fin, m_fin = map(int, fin_str.split(':'))
+                            rango = (time(h_ini, m_ini), time(h_fin, m_fin))
+                except Exception:
+                    pass
+                    
             return [{'inicio': rango[0], 'fin': rango[1], 'cruza_medianoche': False}]
         
         # Turno M (Mañana)
         if turno == 'M':
             tipo_dia = 'fin_semana' if es_finde else 'semana'
             rango = cls.RANGOS_TURNO['M'][tipo_dia]
+            
+            # LÓGICA FLEXIBLE (JSON en ParametroNormativo) - Soporta por día específico
+            from apps.horas_extras.models_normativo import ParametroNormativo
+            param = ParametroNormativo.obtener_vigente(fecha)
+            if param and param.configuracion_turnos and param.configuracion_turnos != "{}":
+                try:
+                    import json
+                    config = json.loads(param.configuracion_turnos)
+                    if 'M' in config:
+                        # Mapeo weekday → nombre día
+                        dias_semana = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo']
+                        dia_nombre = dias_semana[fecha.weekday()]
+                        
+                        # Buscar primero por día específico, luego por tipo (semana/fin_semana)
+                        if dia_nombre in config['M']:
+                            inicio_str, fin_str = config['M'][dia_nombre]
+                            h_ini, m_ini = map(int, inicio_str.split(':'))
+                            h_fin, m_fin = map(int, fin_str.split(':'))
+                            rango = (time(h_ini, m_ini), time(h_fin, m_fin))
+                        elif tipo_dia in config['M']:
+                            # Backward compatibility con formato anterior
+                            inicio_str, fin_str = config['M'][tipo_dia]
+                            h_ini, m_ini = map(int, inicio_str.split(':'))
+                            h_fin, m_fin = map(int, fin_str.split(':'))
+                            rango = (time(h_ini, m_ini), time(h_fin, m_fin))
+                except Exception:
+                    pass # Fallback a defecto si falla JSON
+            
             return [{'inicio': rango[0], 'fin': rango[1], 'cruza_medianoche': False}]
         
         # Turno T (Tarde)
         if turno == 'T':
             tipo_dia = 'fin_semana' if es_finde else 'semana'
             rango = cls.RANGOS_TURNO['T'][tipo_dia]
+            
+            # LÓGICA FLEXIBLE (JSON en ParametroNormativo) - Soporta por día específico
+            from apps.horas_extras.models_normativo import ParametroNormativo
+            param = ParametroNormativo.obtener_vigente(fecha)
+            if param and param.configuracion_turnos and param.configuracion_turnos != "{}":
+                try:
+                    import json
+                    config = json.loads(param.configuracion_turnos)
+                    if 'T' in config:
+                        # Mapeo weekday → nombre día
+                        dias_semana = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo']
+                        dia_nombre = dias_semana[fecha.weekday()]
+                        
+                        # Buscar primero por día específico, luego por tipo
+                        if dia_nombre in config['T']:
+                            inicio_str, fin_str = config['T'][dia_nombre]
+                            h_ini, m_ini = map(int, inicio_str.split(':'))
+                            h_fin, m_fin = map(int, fin_str.split(':'))
+                            rango = (time(h_ini, m_ini), time(h_fin, m_fin))
+                        elif tipo_dia in config['T']:
+                            inicio_str, fin_str = config['T'][tipo_dia]
+                            h_ini, m_ini = map(int, inicio_str.split(':'))
+                            h_fin, m_fin = map(int, fin_str.split(':'))
+                            rango = (time(h_ini, m_ini), time(h_fin, m_fin))
+                except Exception:
+                    pass
+                 
             return [{'inicio': rango[0], 'fin': rango[1], 'cruza_medianoche': False}]
             
         # N_W1 (Primer Miércoles) - Estático

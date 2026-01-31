@@ -71,109 +71,116 @@
 
     <!-- Jornada Nocturna -->
     <div class="card mb-3">
-        <div class="card-header bg-dark text-white">
-            <h5 class="mb-0"><i class="fas fa-moon"></i> Jornada Nocturna</h5>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="border rounded p-3 text-center">
-                        <h6 class="text-muted">Hora Inicio</h6>
-                        <h2 class="mb-0">{{ parametro.hora_inicio_nocturno }}</h2>
+        <div class="card mb-3">
+            <div class="card-header bg-dark d-flex justify-content-center align-items-center">
+                <h5 class="mb-0 text-white"><i class="fas fa-moon"></i> Jornada Nocturna</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="border rounded p-3 text-center">
+                            <h6 class="text-muted">Hora Inicio</h6>
+                            <h2 class="mb-0">{{ parametro.hora_inicio_nocturno }}</h2>
+                        </div>
                     </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="border rounded p-3 text-center">
-                        <h6 class="text-muted">Hora Fin</h6>
-                        <h2 class="mb-0">{{ parametro.hora_fin_nocturno }}</h2>
+                    <div class="col-md-6">
+                        <div class="border rounded p-3 text-center">
+                            <h6 class="text-muted">Hora Fin</h6>
+                            <h2 class="mb-0">{{ parametro.hora_fin_nocturno }}</h2>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Recargos -->
-    <div class="card mb-3">
-        <div class="card-header bg-success text-white">
-            <h5 class="mb-0"><i class="fas fa-percentage"></i> Recargos Legales</h5>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <div class="border rounded p-3 text-center">
-                        <h6 class="text-muted">Recargo Nocturno (RNO)</h6>
-                        <h2 class="mb-0 text-primary">{{ parametro.recargo_nocturno|floatformat:0 }}%</h2>
-                        <small class="text-muted">{{ parametro.recargo_nocturno }}</small>
-                    </div>
+        <!-- Recargos -->
+        <div class="card mb-3">
+            <div class="card mb-3">
+                <div class="card-header bg-success d-flex justify-content-center align-items-center">
+                    <h5 class="mb-0 text-white"><i class="fas fa-percentage"></i> Recargos Legales</h5>
                 </div>
-                <div class="col-md-4 mb-3">
-                    <div class="border rounded p-3 text-center">
-                        <h6 class="text-muted">Recargo Dominical/Festivo (RDF)</h6>
-                        <h2 class="mb-0 text-success">{{ parametro.recargo_dominical_festivo|floatformat:0 }}%</h2>
-                        <small class="text-muted">{{ parametro.recargo_dominical_festivo }}</small>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <div class="border rounded p-3 text-center">
-                        <h6 class="text-muted">Recargo Nocturno Festivo (RNF)</h6>
-                        <h2 class="mb-0 text-danger">{{ parametro.recargo_nocturno_festivo|floatformat:0 }}%</h2>
-                        <small class="text-muted">{{ parametro.recargo_nocturno_festivo }}</small>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="border rounded p-3 text-center">
+                                <h6 class="text-muted">Recargo Nocturno (RNO)</h6>
+                                <h2 class="mb-0 text-primary">{{ parametro.recargo_nocturno|floatformat:0 }}%</h2>
+                                <small class="text-muted">{{ parametro.recargo_nocturno }}</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="border rounded p-3 text-center">
+                                <h6 class="text-muted">Recargo Dominical/Festivo (RDF)</h6>
+                                <h2 class="mb-0 text-success">{{ parametro.recargo_dominical_festivo|floatformat:0 }}%
+                                </h2>
+                                <small class="text-muted">{{ parametro.recargo_dominical_festivo }}</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="border rounded p-3 text-center">
+                                <h6 class="text-muted">Recargo Nocturno Festivo (RNF)</h6>
+                                <h2 class="mb-0 text-danger">{{ parametro.recargo_nocturno_festivo|floatformat:0 }}%
+                                </h2>
+                                <small class="text-muted">{{ parametro.recargo_nocturno_festivo }}</small>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Jornada Legal -->
-    <div class="card mb-3">
-        <div class="card-header bg-info text-white">
-            <h5 class="mb-0"><i class="fas fa-clock"></i> Jornada Legal</h5>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <div class="border rounded p-3 text-center">
-                        <h6 class="text-muted">Jornada Diaria Máxima</h6>
-                        <h2 class="mb-0">{{ parametro.jornada_diaria_max }}h</h2>
+            <!-- Jornada Legal -->
+            <div class="card mb-3">
+                <div class="card mb-3">
+                    <div class="card-header bg-primary d-flex justify-content-center align-items-center">
+                        <h5 class="mb-0 text-white"><i class="fas fa-clock"></i> Jornada Legal</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="border rounded p-3 text-center">
+                                    <h6 class="text-muted">Jornada Diaria Máxima</h6>
+                                    <h2 class="mb-0">{{ parametro.jornada_diaria_max }}h</h2>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="border rounded p-3 text-center">
+                                    <h6 class="text-muted">Jornada Semanal Máxima</h6>
+                                    <h2 class="mb-0">{{ parametro.jornada_semanal_max }}h</h2>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="border rounded p-3 text-center">
+                                    <h6 class="text-muted">Divisor Mensual</h6>
+                                    <h2 class="mb-0">{{ parametro.divisor_mensual }}</h2>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-4 mb-3">
-                    <div class="border rounded p-3 text-center">
-                        <h6 class="text-muted">Jornada Semanal Máxima</h6>
-                        <h2 class="mb-0">{{ parametro.jornada_semanal_max }}h</h2>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <div class="border rounded p-3 text-center">
-                        <h6 class="text-muted">Divisor Mensual</h6>
-                        <h2 class="mb-0">{{ parametro.divisor_mensual }}</h2>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Topes de Horas Extra -->
-    <div class="card mb-3">
-        <div class="card-header bg-warning">
-            <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Límites de Horas Extra</h5>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="border rounded p-3 text-center">
-                        <h6 class="text-muted">Tope por Día</h6>
-                        <h2 class="mb-0">{{ parametro.tope_extra_dia }}h</h2>
+                <!-- Topes de Horas Extra -->
+                <div class="card mb-3">
+                    <div class="card mb-3">
+                        <div class="card-header bg-warning d-flex justify-content-center align-items-center">
+                            <h5 class="mb-0 text-dark"><i class="fas fa-exclamation-triangle"></i> Límites de Horas
+                                Extra</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="border rounded p-3 text-center">
+                                        <h6 class="text-muted">Tope por Día</h6>
+                                        <h2 class="mb-0">{{ parametro.tope_extra_dia }}h</h2>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="border rounded p-3 text-center">
+                                        <h6 class="text-muted">Tope por Semana</h6>
+                                        <h2 class="mb-0">{{ parametro.tope_extra_semana }}h</h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="border rounded p-3 text-center">
-                        <h6 class="text-muted">Tope por Semana</h6>
-                        <h2 class="mb-0">{{ parametro.tope_extra_semana }}h</h2>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
+                {% endblock %}
